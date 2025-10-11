@@ -82,26 +82,27 @@ export default function ToolsPage() {
                 key={app.name}
                 className="group p-6 hover:shadow-lg transition-all"
               >
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="rounded-lg bg-primary/10 p-2.5">
-                    <app.icon className="h-5 w-5 text-primary" />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-primary/10 p-2.5">
+                      <app.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">
+                        {app.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {app.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-1">
-                      {app.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {app.description}
-                    </p>
-                  </div>
+                  <Button asChild size="sm" variant="outline">
+                    <a href={app.url} target="_blank" rel="noopener noreferrer">
+                      Open
+                      <ExternalLink className="ml-2 h-3.5 w-3.5" />
+                    </a>
+                  </Button>
                 </div>
-
-                <Button asChild className="w-full" size="sm">
-                  <a href={app.url} target="_blank" rel="noopener noreferrer">
-                    Open
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
               </Card>
             ))}
           </div>

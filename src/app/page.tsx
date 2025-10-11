@@ -91,9 +91,17 @@ export default function DashboardPage() {
       <div className="space-y-8 p-6">
         {/* Quick Access */}
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-foreground">
-            Linked Apps
-          </h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">
+              Linked Apps
+            </h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/tools">
+                More Tools
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
           <div className="grid gap-4 md:grid-cols-3">
             {/* Content Studio */}
             <Card className="group relative overflow-hidden p-6 transition-all hover:shadow-lg">

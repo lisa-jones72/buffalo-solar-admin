@@ -19,10 +19,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Tools", href: "/tools", icon: Layers },
-];
+const navigation = [{ name: "Dashboard", href: "/", icon: LayoutDashboard }];
 
 const linkedApps = [
   { name: "Studio", href: "https://studio.buffalosolar.com", icon: FileText },

@@ -68,7 +68,7 @@ export default function AnalyticsPage() {
               Analytics Tools
             </h2>
             <p className="text-muted-foreground">
-              Understand what each tool can tell you about your business
+              Understand what each tool can tell you about our business
             </p>
           </div>
 
