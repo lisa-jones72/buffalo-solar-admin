@@ -21,10 +21,10 @@ import { useState } from "react"
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Systems", href: "/systems", icon: Layers },
+  { name: "Tools", href: "/tools", icon: Layers },
 ]
 
-const externalLinks = [
+const linkedApps = [
   { name: "Studio", href: "https://studio.buffalosolar.com", icon: FileText },
   { name: "Careers", href: "https://careers.buffalosolar.com", icon: User },
   { name: "Website", href: "https://buffalosolar.com", icon: ExternalLink },
@@ -93,11 +93,11 @@ export function AppSidebar() {
           })}
         </div>
 
-        {/* External Links */}
+        {/* Linked Apps */}
         {!collapsed && (
           <div className="space-y-1">
-            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">External</p>
-            {externalLinks.map((item) => (
+            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Linked Apps</p>
+            {linkedApps.map((item) => (
               <a
                 key={item.name}
                 href={item.href}

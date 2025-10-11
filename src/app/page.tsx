@@ -17,44 +17,37 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { DashboardMetrics, RecentActivityItem } from "@/lib/types";
 
-const quickAccessCards = [
-  {
-    title: "Content Studio",
-    description: "Manage blog content",
-    href: "https://studio.buffalosolar.com",
-    icon: FileText,
-    external: true,
-  },
-  {
-    title: "Careers",
-    description: "Manage jobs & applications",
-    href: "https://careers.buffalosolar.com",
-    icon: Users,
-    external: true,
-  },
-  {
-    title: "Forms Manager",
-    description: "View submissions",
-    href: "/forms",
-    icon: FileCheck,
-    external: false,
-  },
-];
+interface QuickStats {
+  studio: {
+    totalViews: number;
+    recentPosts: number;
+  };
+  careers: {
+    newApplications: number;
+    activeListings: number;
+  };
+  forms: {
+    totalSubmissions: number;
+    thisWeek: number;
+  };
+}
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>(
     []
   );
+  const [quickStats, setQuickStats] = useState<QuickStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch metrics and activity in parallel
-        const [metricsRes, activityRes] = await Promise.all([
+        // Fetch metrics, activity, and quick stats in parallel
+        const [metricsRes, activityRes, quickStatsRes] = await Promise.all([
           fetch("/api/dashboard/metrics"),
           fetch("/api/dashboard/activity"),
+          fetch("/api/dashboard/quick-stats"),
         ]);
 
         if (metricsRes.ok) {
@@ -65,6 +58,11 @@ export default function DashboardPage() {
         if (activityRes.ok) {
           const activityData = await activityRes.json();
           setRecentActivity(activityData);
+        }
+
+        if (quickStatsRes.ok) {
+          const statsData = await quickStatsRes.json();
+          setQuickStats(statsData);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -116,46 +114,114 @@ export default function DashboardPage() {
         {/* Quick Access */}
         <section>
           <h2 className="mb-4 text-lg font-semibold text-foreground">
-            Quick Access
+            Linked Apps
           </h2>
           <div className="grid gap-4 md:grid-cols-3">
-            {quickAccessCards.map((card) => (
-              <Card
-                key={card.title}
-                className="group relative overflow-hidden p-6 transition-all hover:shadow-lg"
+            {/* Content Studio */}
+            <Card className="group relative overflow-hidden p-6 transition-all hover:shadow-lg">
+              <a
+                href="https://studio.buffalosolar.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0"
               >
-                <div className="flex items-start gap-4">
-                  <div className="rounded-lg bg-primary/10 p-3">
-                    <card.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-semibold text-foreground">
-                      {card.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {card.description}
-                    </p>
-                  </div>
-                  {card.external && (
-                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  )}
+                <span className="sr-only">Open Content Studio</span>
+              </a>
+              <div className="flex items-start gap-4 mb-4">
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <FileText className="h-6 w-6 text-primary" />
                 </div>
-                {card.external ? (
-                  <a
-                    href={card.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute inset-0"
-                  >
-                    <span className="sr-only">Open {card.title}</span>
-                  </a>
-                ) : (
-                  <Link href={card.href} className="absolute inset-0">
-                    <span className="sr-only">Open {card.title}</span>
-                  </Link>
-                )}
-              </Card>
-            ))}
+                <div className="flex-1 space-y-1">
+                  <h3 className="font-semibold text-foreground">
+                    Content Studio
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage blog posts
+                  </p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              </div>
+              {loading || !quickStats ? (
+                <div className="h-6 w-24 rounded bg-muted animate-pulse" />
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-foreground">
+                    {quickStats.studio.totalViews.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    total blog views
+                  </span>
+                </div>
+              )}
+            </Card>
+
+            {/* Careers */}
+            <Card className="group relative overflow-hidden p-6 transition-all hover:shadow-lg">
+              <a
+                href="https://careers.buffalosolar.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0"
+              >
+                <span className="sr-only">Open Careers</span>
+              </a>
+              <div className="flex items-start gap-4 mb-4">
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h3 className="font-semibold text-foreground">Careers</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Job applications
+                  </p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              </div>
+              {loading || !quickStats ? (
+                <div className="h-6 w-24 rounded bg-muted animate-pulse" />
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-foreground">
+                    {quickStats.careers.newApplications}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    this week
+                  </span>
+                </div>
+              )}
+            </Card>
+
+            {/* Forms Manager */}
+            <Card className="group relative overflow-hidden p-6 transition-all hover:shadow-lg">
+              <Link href="/forms" className="absolute inset-0">
+                <span className="sr-only">Open Forms Manager</span>
+              </Link>
+              <div className="flex items-start gap-4 mb-4">
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <FileCheck className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h3 className="font-semibold text-foreground">
+                    Forms Manager
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    View submissions
+                  </p>
+                </div>
+              </div>
+              {loading || !quickStats ? (
+                <div className="h-6 w-24 rounded bg-muted animate-pulse" />
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-foreground">
+                    {quickStats.forms.thisWeek}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    this week
+                  </span>
+                </div>
+              )}
+            </Card>
           </div>
         </section>
 
