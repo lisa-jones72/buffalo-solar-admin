@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Layers,
@@ -14,43 +14,43 @@ import {
   LogOut,
   ExternalLink,
   ChevronLeft,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { useState } from "react"
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Tools", href: "/tools", icon: Layers },
-]
+];
 
 const linkedApps = [
   { name: "Studio", href: "https://studio.buffalosolar.com", icon: FileText },
   { name: "Careers", href: "https://careers.buffalosolar.com", icon: User },
   { name: "Website", href: "https://buffalosolar.com", icon: ExternalLink },
-]
+];
 
 const adminLinks = [
   { name: "Forms", href: "/forms", icon: FileText },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Files", href: "/files", icon: FolderOpen },
   { name: "Reports", href: "/reports", icon: FileBarChart },
-]
+];
 
 const bottomLinks = [
   { name: "Settings", href: "/settings", icon: Settings },
   { name: "Profile", href: "/profile", icon: User },
-]
+];
 
 export function AppSidebar() {
-  const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <aside
       className={cn(
         "flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
-        collapsed ? "w-16" : "w-64",
+        collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
@@ -60,11 +60,23 @@ export function AppSidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-sm">
               BS
             </div>
-            <span className="font-semibold text-sidebar-foreground">Buffalo Solar</span>
+            <span className="font-semibold text-sidebar-foreground">
+              Buffalo Solar
+            </span>
           </Link>
         )}
-        <Button variant="ghost" size="icon" onClick={() => setCollapsed(!collapsed)} className="h-8 w-8">
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCollapsed(!collapsed)}
+          className="h-8 w-8"
+        >
+          <ChevronLeft
+            className={cn(
+              "h-4 w-4 transition-transform",
+              collapsed && "rotate-180"
+            )}
+          />
         </Button>
       </div>
 
@@ -73,7 +85,7 @@ export function AppSidebar() {
         {/* Main Navigation */}
         <div className="space-y-1">
           {navigation.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href;
             return (
               <Link
                 key={item.name}
@@ -82,21 +94,23 @@ export function AppSidebar() {
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                 )}
                 title={collapsed ? item.name : undefined}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
                 {!collapsed && <span>{item.name}</span>}
               </Link>
-            )
+            );
           })}
         </div>
 
         {/* Linked Apps */}
         {!collapsed && (
           <div className="space-y-1">
-            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Linked Apps</p>
+            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Linked Apps
+            </p>
             {linkedApps.map((item) => (
               <a
                 key={item.name}
@@ -116,9 +130,11 @@ export function AppSidebar() {
         {/* Admin Section */}
         {!collapsed && (
           <div className="space-y-1">
-            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
+            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Admin
+            </p>
             {adminLinks.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.name}
@@ -127,13 +143,13 @@ export function AppSidebar() {
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                   )}
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
                   <span>{item.name}</span>
                 </Link>
-              )
+              );
             })}
           </div>
         )}
@@ -161,5 +177,5 @@ export function AppSidebar() {
         </button>
       </div>
     </aside>
-  )
+  );
 }
