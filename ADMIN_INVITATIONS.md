@@ -97,7 +97,7 @@ You'll be automatically logged in and redirected to the dashboard!
   email: string;
   token: string;
   invitedBy: string;
-  expiresAt: Date; // 7 days from creation
+  expiresAt: Date; // 24 hours from creation
   used: boolean;
   createdAt: Date;
 }
@@ -140,7 +140,7 @@ The system now checks THREE places for authorization:
 
 ## Security Features
 
-✅ **Invitation Expiry:** Invitations expire after 7 days  
+✅ **Invitation Expiry:** Invitations expire after 24 hours  
 ✅ **One-time Use:** Each invitation can only be used once  
 ✅ **Email Validation:** Only invited emails can register  
 ✅ **Token-based:** Secure unique tokens for each invitation  
@@ -251,7 +251,7 @@ Navigate to **Settings → Admin Management** to see:
 
 ### "Invalid invitation"
 **Causes:**
-- Link expired (>7 days old)
+- Link expired (>24 hours old)
 - Already used
 - Invalid token
 

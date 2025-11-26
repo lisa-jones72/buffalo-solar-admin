@@ -2,6 +2,7 @@
 // Only these emails can create accounts and access the admin panel
 export const ALLOWED_ADMIN_EMAILS: string[] = [
   // Add your allowed emails here
+  "lisa@buffalosolar.com",
   // Example: "admin@buffalosolar.com",
   // Example: "lisa@buffalosolar.com",
 ];

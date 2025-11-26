@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAllAdmins } from "@/lib/admin";
 import type { Admin } from "@/lib/types";
-import { UserPlus, Mail, CheckCircle, Clock, Copy } from "lucide-react";
+import { UserPlus, Mail, CheckCircle, Clock, Copy, Trash2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function AdminsPage() {
@@ -83,6 +83,32 @@ function AdminsContent() {
   const copyInviteLink = () => {
     navigator.clipboard.writeText(inviteLink);
     setSuccess("Invite link copied to clipboard!");
+  };
+
+  const handleDelete = async (email: string) => {
+    if (!confirm(`Delete invitation for ${email}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admins/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to delete invitation");
+        return;
+      }
+
+      setSuccess(`Invitation for ${email} deleted`);
+      loadAdmins(); // Refresh list
+    } catch (err) {
+      setError("Failed to delete invitation");
+    }
   };
 
   return (
@@ -198,13 +224,23 @@ function AdminsContent() {
                       Active
                     </Badge>
                   ) : (
-                    <Badge
-                      variant="secondary"
-                      className="bg-yellow-100 text-yellow-700 border-yellow-200"
-                    >
-                      <Clock className="w-3 h-3 mr-1" />
-                      Pending
-                    </Badge>
+                    <>
+                      <Badge
+                        variant="secondary"
+                        className="bg-yellow-100 text-yellow-700 border-yellow-200"
+                      >
+                        <Clock className="w-3 h-3 mr-1" />
+                        Pending
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(admin.email)}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
                   )}
 
                   {admin.role === "super_admin" && (

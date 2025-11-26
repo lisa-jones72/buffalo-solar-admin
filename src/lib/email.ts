@@ -107,7 +107,7 @@ export async function sendInvitationEmail(
             </p>
 
             <p style="font-size: 14px; color: #999; margin-top: 24px;">
-              <strong>Note:</strong> This invitation will expire in 7 days.
+              <strong>Note:</strong> This invitation will expire in 24 hours.
             </p>
           </div>
 

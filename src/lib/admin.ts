@@ -5,6 +5,7 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   serverTimestamp,
@@ -101,7 +102,7 @@ export async function createInvitation(
     const invitationDoc = doc(invitationsRef);
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours expiry
 
     await setDoc(invitationDoc, {
       email: email.toLowerCase(),
@@ -126,7 +127,8 @@ export async function createInvitation(
       updatedAt: serverTimestamp(),
     });
 
-    return { success: true, invitationId: invitationDoc.id };
+    // Return the token (not doc ID) for the URL
+    return { success: true, invitationId: token };
   } catch (error) {
     console.error("Error creating invitation:", error);
     return { success: false, error: "Failed to create invitation" };
@@ -220,6 +222,43 @@ export async function validateInvitationToken(
   } catch (error) {
     console.error("Error validating token:", error);
     return { valid: false, error: "Failed to validate invitation" };
+  }
+}
+
+// Delete/cancel invitation
+export async function deleteInvitation(
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Find and delete invitation
+    const invitationsRef = collection(db, "invitations");
+    const inviteQuery = query(
+      invitationsRef,
+      where("email", "==", email.toLowerCase())
+    );
+    const inviteSnapshot = await getDocs(inviteQuery);
+
+    if (!inviteSnapshot.empty) {
+      await deleteDoc(inviteSnapshot.docs[0].ref);
+    }
+
+    // Find and delete pending admin record
+    const adminsRef = collection(db, "admins");
+    const adminQuery = query(
+      adminsRef,
+      where("email", "==", email.toLowerCase()),
+      where("status", "==", "pending")
+    );
+    const adminSnapshot = await getDocs(adminQuery);
+
+    if (!adminSnapshot.empty) {
+      await deleteDoc(adminSnapshot.docs[0].ref);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting invitation:", error);
+    return { success: false, error: "Failed to delete invitation" };
   }
 }
 

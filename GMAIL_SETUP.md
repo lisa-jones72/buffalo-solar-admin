@@ -110,7 +110,7 @@ The invitation email includes:
 - ✅ Personalized greeting
 - ✅ Invitation details
 - ✅ Accept button with secure link
-- ✅ Expiration notice (7 days)
+- ✅ Expiration notice (24 hours)
 - ✅ Professional HTML design
 
 Example email preview:
@@ -135,7 +135,7 @@ As an admin, you'll be able to:
 
 [Accept Invitation Button]
 
-Note: This invitation will expire in 7 days.
+Note: This invitation will expire in 24 hours.
 ```
 
 ---
