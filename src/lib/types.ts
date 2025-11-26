@@ -49,3 +49,27 @@ export interface RecentActivityItem {
   href: string;
   formType?: string;
 }
+
+// Admin management
+export interface Admin {
+  id: string;
+  email: string;
+  name?: string;
+  role: "admin" | "super_admin";
+  status: "pending" | "active";
+  invitedBy?: string;
+  invitedAt: Date;
+  acceptedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Invitation {
+  id: string;
+  email: string;
+  token: string;
+  invitedBy: string;
+  expiresAt: Date;
+  used: boolean;
+  createdAt: Date;
+}

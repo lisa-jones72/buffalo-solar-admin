@@ -25,9 +25,10 @@ const formTypeToCollection: Record<string, string> = {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const formType = searchParams.get("type") || "consultation";
     const collectionName = formTypeToCollection[formType];
@@ -36,7 +37,7 @@ export async function GET(
       return NextResponse.json({ error: "Invalid form type" }, { status: 400 });
     }
 
-    const docRef = doc(db, collectionName, params.id);
+    const docRef = doc(db, collectionName, id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {

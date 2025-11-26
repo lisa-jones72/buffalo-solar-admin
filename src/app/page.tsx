@@ -16,8 +16,17 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { DashboardMetrics, RecentActivityItem } from "@/lib/types";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
+  );
+}
+
+function DashboardContent() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>(
     []

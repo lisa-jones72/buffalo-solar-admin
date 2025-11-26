@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Layers,
@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navigation = [{ name: "Dashboard", href: "/", icon: LayoutDashboard }];
 
@@ -43,7 +44,18 @@ const bottomLinks = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push("/login");
+    } catch (error) {
+      console.error("Failed to log out:", error);
+    }
+  };
 
   return (
     <aside
@@ -168,6 +180,7 @@ export function AppSidebar() {
           </Link>
         ))}
         <button
+          onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50"
           title={collapsed ? "Logout" : undefined}
         >

@@ -9,31 +9,43 @@ import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await signIn(email, password);
+      await signUp(email, password);
       router.push("/");
     } catch (err: any) {
-      setError(err.message || "Failed to sign in");
+      setError(err.message || "Failed to create account");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     setError("");
     setLoading(true);
 
@@ -41,7 +53,7 @@ export default function LoginPage() {
       await signInWithGoogle();
       router.push("/");
     } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+      setError(err.message || "Failed to sign up with Google");
     } finally {
       setLoading(false);
     }
@@ -68,10 +80,10 @@ export default function LoginPage() {
         <div className="bg-card rounded-xl shadow-sm border border-border p-8">
           <div className="text-center mb-8">
             <h2 className="text-xl font-semibold text-foreground mb-2">
-              Welcome back
+              Create your account
             </h2>
             <p className="text-muted-foreground text-sm">
-              Sign in to access your dashboard
+              Sign up to get started
             </p>
           </div>
 
@@ -82,13 +94,13 @@ export default function LoginPage() {
           )}
 
           {!showEmailForm ? (
-            /* Sign In Method Buttons */
+            /* Sign Up Method Buttons */
             <div className="space-y-3">
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full h-14 text-base font-medium bg-transparent"
-                onClick={handleGoogleLogin}
+                onClick={handleGoogleSignup}
                 disabled={loading}
               >
                 <Image
@@ -98,7 +110,7 @@ export default function LoginPage() {
                   height={20}
                   className="mr-3"
                 />
-                Sign in with Google
+                Sign up with Google
               </Button>
 
               <Button
@@ -109,7 +121,7 @@ export default function LoginPage() {
                 disabled={loading}
               >
                 <Mail className="w-5 h-5 mr-3" />
-                Sign in with Email
+                Sign up with Email
               </Button>
             </div>
           ) : (
@@ -128,7 +140,7 @@ export default function LoginPage() {
                 Back
               </Button>
 
-              <form onSubmit={handleEmailLogin} className="space-y-4">
+              <form onSubmit={handleEmailSignup} className="space-y-4">
                 <div>
                   <Input
                     type="email"
@@ -146,6 +158,17 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={6}
+                    className="h-12"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Confirm password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
                     className="h-12"
                   />
                 </div>
@@ -155,26 +178,27 @@ export default function LoginPage() {
                   className="w-full h-12 text-base font-medium"
                   disabled={loading}
                 >
-                  {loading ? "Signing in..." : "Sign in"}
+                  {loading ? "Creating account..." : "Create account"}
                 </Button>
               </form>
             </>
           )}
 
-          {/* Sign Up Link */}
+          {/* Sign In Link */}
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Don&apos;t have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/register"
+              href="/login"
               className="text-primary hover:underline font-medium"
             >
-              Sign up
+              Sign in
             </Link>
           </p>
 
           {/* Footer Text */}
           <p className="text-center text-xs text-muted-foreground mt-6">
-            By signing in, you agree to our Terms of Service and Privacy Policy
+            By creating an account, you agree to our Terms of Service and
+            Privacy Policy
           </p>
         </div>
 
@@ -189,3 +213,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

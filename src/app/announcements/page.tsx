@@ -74,6 +74,7 @@ import {
   doc,
   getDocs,
   query,
+  where,
   orderBy,
   Timestamp,
 } from "firebase/firestore";
@@ -358,7 +359,7 @@ export default function AnnouncementsPage() {
     <div className="flex flex-col gap-6 p-6">
       <PageHeader
         title="Announcements"
-        description="Create and manage website announcements and notifications"
+        subtitle="Create and manage website announcements and notifications"
       />
 
       {/* Actions */}
