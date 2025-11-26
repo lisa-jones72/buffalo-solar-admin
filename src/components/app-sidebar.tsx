@@ -14,6 +14,7 @@ import {
   LogOut,
   ExternalLink,
   ChevronLeft,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const linkedApps = [
 
 const adminLinks = [
   { name: "Forms", href: "/forms", icon: FileText },
+  { name: "Announcements", href: "/announcements", icon: Megaphone },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Files", href: "/files", icon: FolderOpen },
   { name: "Reports", href: "/reports", icon: FileBarChart },
