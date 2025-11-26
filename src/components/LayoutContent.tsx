@@ -7,9 +7,8 @@ import { Suspense } from "react";
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Don't show sidebar on auth pages, invite acceptance, onboarding, or landing page
+  // Don't show sidebar on auth pages, invite acceptance, or onboarding
   const isAuthPage = 
-    pathname === "/" ||
     pathname === "/login" || 
     pathname === "/register" || 
     pathname.startsWith("/accept-invite/") ||
