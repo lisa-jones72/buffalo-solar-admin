@@ -225,12 +225,12 @@ export async function validateInvitationToken(
   }
 }
 
-// Delete/cancel invitation
+// Delete/cancel invitation or admin user
 export async function deleteInvitation(
   email: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Find and delete invitation
+    // Find and delete invitation (if exists)
     const invitationsRef = collection(db, "invitations");
     const inviteQuery = query(
       invitationsRef,
@@ -242,12 +242,11 @@ export async function deleteInvitation(
       await deleteDoc(inviteSnapshot.docs[0].ref);
     }
 
-    // Find and delete pending admin record
+    // Find and delete admin record (pending or active)
     const adminsRef = collection(db, "admins");
     const adminQuery = query(
       adminsRef,
-      where("email", "==", email.toLowerCase()),
-      where("status", "==", "pending")
+      where("email", "==", email.toLowerCase())
     );
     const adminSnapshot = await getDocs(adminQuery);
 
@@ -257,8 +256,8 @@ export async function deleteInvitation(
 
     return { success: true };
   } catch (error) {
-    console.error("Error deleting invitation:", error);
-    return { success: false, error: "Failed to delete invitation" };
+    console.error("Error deleting admin:", error);
+    return { success: false, error: "Failed to delete admin" };
   }
 }
 

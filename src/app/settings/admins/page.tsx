@@ -11,6 +11,7 @@ import { getAllAdmins } from "@/lib/admin";
 import type { Admin } from "@/lib/types";
 import { UserPlus, Mail, CheckCircle, Clock, Copy, Trash2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ALLOWED_ADMIN_EMAILS } from "@/lib/auth-whitelist";
 
 export default function AdminsPage() {
   return (
@@ -29,6 +30,9 @@ function AdminsContent() {
   const [inviteLink, setInviteLink] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  // Check if current user is a super admin
+  const isSuperAdmin = user?.email && ALLOWED_ADMIN_EMAILS.includes(user.email.toLowerCase());
 
   useEffect(() => {
     loadAdmins();
@@ -85,8 +89,12 @@ function AdminsContent() {
     setSuccess("Invite link copied to clipboard!");
   };
 
-  const handleDelete = async (email: string) => {
-    if (!confirm(`Delete invitation for ${email}?`)) {
+  const handleDelete = async (email: string, status: string) => {
+    const confirmMessage = status === "pending" 
+      ? `Delete invitation for ${email}?`
+      : `Delete admin user ${email}? This action cannot be undone.`;
+      
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -100,14 +108,17 @@ function AdminsContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Failed to delete invitation");
+        setError(data.error || "Failed to delete admin");
         return;
       }
 
-      setSuccess(`Invitation for ${email} deleted`);
+      const successMessage = status === "pending"
+        ? `Invitation for ${email} deleted`
+        : `Admin ${email} deleted successfully`;
+      setSuccess(successMessage);
       loadAdmins(); // Refresh list
     } catch (err) {
-      setError("Failed to delete invitation");
+      setError("Failed to delete admin");
     }
   };
 
@@ -153,27 +164,28 @@ function AdminsContent() {
           )}
 
           {inviteLink && (
-            <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-              <p className="text-sm text-blue-700 mb-2 font-medium">
+            <div className="p-4 rounded-lg bg-slate-50 border border-slate-300">
+              <p className="text-sm text-slate-900 mb-2 font-medium">
                 Invitation Link (share this with the new admin):
               </p>
               <div className="flex gap-2">
                 <Input
                   value={inviteLink}
                   readOnly
-                  className="text-sm font-mono"
+                  className="text-sm font-mono bg-white text-slate-900 border-slate-300"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={copyInviteLink}
+                  className="bg-white hover:bg-slate-100 text-slate-900 border-slate-300"
                 >
                   <Copy className="w-4 h-4" />
                 </Button>
               </div>
-              <p className="text-xs text-blue-600 mt-2">
-                Note: In production, this will be sent via email automatically.
+              <p className="text-xs text-slate-600 mt-2">
+                ⏰ This link expires in 24 hours
               </p>
             </div>
           )}
@@ -216,13 +228,27 @@ function AdminsContent() {
 
                 <div className="flex items-center gap-3">
                   {admin.status === "active" ? (
-                    <Badge
-                      variant="default"
-                      className="bg-green-100 text-green-700 border-green-200"
-                    >
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Active
-                    </Badge>
+                    <>
+                      <Badge
+                        variant="default"
+                        className="bg-green-100 text-green-700 border-green-200"
+                      >
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Active
+                      </Badge>
+                      {/* Super admins can delete other active admins (but not themselves) */}
+                      {isSuperAdmin && admin.email !== user?.email && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(admin.email, admin.status)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                          title="Delete admin"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </>
                   ) : (
                     <>
                       <Badge
@@ -235,8 +261,9 @@ function AdminsContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(admin.email)}
+                        onClick={() => handleDelete(admin.email, admin.status)}
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                        title="Delete invitation"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
