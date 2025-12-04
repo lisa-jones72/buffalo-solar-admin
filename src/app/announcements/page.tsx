@@ -421,28 +421,31 @@ export default function AnnouncementsPage() {
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex flex-row flex-wrap items-center gap-1.5">
-                      <Badge
-                        variant={announcement.isActive ? "default" : "secondary"}
-                        className="font-normal"
-                      >
-                        {announcement.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                      {isExpired && (
+                      {isExpired ? (
                         <Badge
                           variant="destructive"
-                          className="font-normal text-xs"
+                          className="font-normal"
                         >
                           <AlertCircle className="h-3 w-3 mr-1" />
                           Expired
                         </Badge>
-                      )}
-                      {isUpcoming && !isExpired && (
-                        <Badge
-                          variant="outline"
-                          className="font-normal text-xs"
-                        >
-                          Upcoming
-                        </Badge>
+                      ) : (
+                        <>
+                          <Badge
+                            variant={announcement.isActive ? "default" : "secondary"}
+                            className="font-normal"
+                          >
+                            {announcement.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                          {isUpcoming && (
+                            <Badge
+                              variant="outline"
+                              className="font-normal text-xs"
+                            >
+                              Upcoming
+                            </Badge>
+                          )}
+                        </>
                       )}
                     </div>
                   </TableCell>
@@ -636,13 +639,6 @@ export default function AnnouncementsPage() {
                     STATUS
                   </Label>
                   <div className="mt-1 flex flex-row flex-wrap items-center gap-1.5">
-                    <Badge
-                      variant={
-                        viewingAnnouncement.isActive ? "default" : "secondary"
-                      }
-                    >
-                      {viewingAnnouncement.isActive ? "Active" : "Inactive"}
-                    </Badge>
                     {(() => {
                       const now = new Date();
                       const isExpired = viewingAnnouncement.endDate < now;
@@ -652,24 +648,32 @@ export default function AnnouncementsPage() {
                         return (
                           <Badge
                             variant="destructive"
-                            className="text-xs"
                           >
                             <AlertCircle className="h-3 w-3 mr-1" />
                             Expired
                           </Badge>
                         );
                       }
-                      if (isUpcoming) {
-                        return (
+                      
+                      return (
+                        <>
                           <Badge
-                            variant="outline"
-                            className="text-xs"
+                            variant={
+                              viewingAnnouncement.isActive ? "default" : "secondary"
+                            }
                           >
-                            Upcoming
+                            {viewingAnnouncement.isActive ? "Active" : "Inactive"}
                           </Badge>
-                        );
-                      }
-                      return null;
+                          {isUpcoming && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              Upcoming
+                            </Badge>
+                          )}
+                        </>
+                      );
                     })()}
                   </div>
                 </div>
