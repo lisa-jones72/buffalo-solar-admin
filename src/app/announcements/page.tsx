@@ -63,6 +63,7 @@ import {
   Upload,
   X as XIcon,
   Info,
+  AlertCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
@@ -396,13 +397,18 @@ export default function AnnouncementsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
-                <TableHead className="w-[100px]">Status</TableHead>
+                <TableHead className="w-[140px]">Status</TableHead>
                 <TableHead className="w-[200px]">Dates</TableHead>
                 <TableHead className="w-[180px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {announcements.map((announcement) => (
+              {announcements.map((announcement) => {
+                const now = new Date();
+                const isExpired = announcement.endDate < now;
+                const isUpcoming = announcement.startDate > now;
+                
+                return (
                 <TableRow 
                   key={announcement.id}
                   className="cursor-pointer"
@@ -414,12 +420,31 @@ export default function AnnouncementsPage() {
                     </span>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Badge
-                      variant={announcement.isActive ? "default" : "secondary"}
-                      className="font-normal"
-                    >
-                      {announcement.isActive ? "Active" : "Inactive"}
-                    </Badge>
+                    <div className="flex flex-row flex-wrap items-center gap-1.5">
+                      <Badge
+                        variant={announcement.isActive ? "default" : "secondary"}
+                        className="font-normal"
+                      >
+                        {announcement.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                      {isExpired && (
+                        <Badge
+                          variant="destructive"
+                          className="font-normal text-xs"
+                        >
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Expired
+                        </Badge>
+                      )}
+                      {isUpcoming && !isExpired && (
+                        <Badge
+                          variant="outline"
+                          className="font-normal text-xs"
+                        >
+                          Upcoming
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="text-sm text-muted-foreground">
@@ -488,7 +513,8 @@ export default function AnnouncementsPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}
@@ -609,7 +635,7 @@ export default function AnnouncementsPage() {
                   <Label className="text-xs text-muted-foreground">
                     STATUS
                   </Label>
-                  <div className="mt-1">
+                  <div className="mt-1 flex flex-row flex-wrap items-center gap-1.5">
                     <Badge
                       variant={
                         viewingAnnouncement.isActive ? "default" : "secondary"
@@ -617,6 +643,34 @@ export default function AnnouncementsPage() {
                     >
                       {viewingAnnouncement.isActive ? "Active" : "Inactive"}
                     </Badge>
+                    {(() => {
+                      const now = new Date();
+                      const isExpired = viewingAnnouncement.endDate < now;
+                      const isUpcoming = viewingAnnouncement.startDate > now;
+                      
+                      if (isExpired) {
+                        return (
+                          <Badge
+                            variant="destructive"
+                            className="text-xs"
+                          >
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Expired
+                          </Badge>
+                        );
+                      }
+                      if (isUpcoming) {
+                        return (
+                          <Badge
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            Upcoming
+                          </Badge>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
                 <div>
@@ -627,6 +681,18 @@ export default function AnnouncementsPage() {
                     {format(viewingAnnouncement.startDate, "MMM dd, yyyy")} -{" "}
                     {format(viewingAnnouncement.endDate, "MMM dd, yyyy")}
                   </p>
+                  {(() => {
+                    const now = new Date();
+                    const isExpired = viewingAnnouncement.endDate < now;
+                    if (isExpired) {
+                      return (
+                        <p className="text-xs text-destructive mt-1">
+                          This announcement expired on {format(viewingAnnouncement.endDate, "MMM dd, yyyy")}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
 
