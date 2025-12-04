@@ -215,6 +215,12 @@ export default function AnnouncementsPage() {
     setSubmitting(true);
 
     try {
+      // Parse dates correctly to avoid timezone issues
+      const parseDate = (dateString: string) => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day, 12, 0, 0); // Noon local time
+      };
+
       const announcementData = {
         title: formData.title,
         summary: formData.summary,
@@ -224,8 +230,8 @@ export default function AnnouncementsPage() {
         ctaText: formData.ctaText || null,
         ctaUrl: formData.ctaUrl || null,
         isActive: formData.isActive,
-        startDate: Timestamp.fromDate(new Date(formData.startDate)),
-        endDate: Timestamp.fromDate(new Date(formData.endDate)),
+        startDate: Timestamp.fromDate(parseDate(formData.startDate)),
+        endDate: Timestamp.fromDate(parseDate(formData.endDate)),
         updatedAt: Timestamp.now(),
       };
 
