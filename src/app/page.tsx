@@ -58,7 +58,16 @@ function DashboardContent() {
       }
     }
 
+    // Fetch immediately
     fetchData();
+
+    // Poll for updated metrics and activity every 2 minutes
+    const interval = setInterval(() => {
+      fetchData();
+    }, 120000); // 2 minutes
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   const metricsArray = metrics
