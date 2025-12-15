@@ -118,7 +118,10 @@ export function SubmissionDetailDialog({
 
   // Sort submission data fields by preferred order
   function sortFields(data: Record<string, unknown>): [string, unknown][] {
-    const entries = Object.entries(data);
+    const entries = Object.entries(data).filter(
+      // Filter out recaptcha-related fields
+      ([key]) => !key.toLowerCase().includes("recaptcha")
+    );
 
     return entries.sort((a, b) => {
       const aIndex = fieldOrder.indexOf(a[0]);
