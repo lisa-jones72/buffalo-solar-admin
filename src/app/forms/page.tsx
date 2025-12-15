@@ -26,10 +26,21 @@ import {
   Eye,
   FileText,
   Loader2,
+  Trash2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SubmissionDetailDialog } from "@/components/submission-detail-dialog";
 import { formatPhoneNumber } from "@/lib/formatters";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type FormType =
   | "consultation"
@@ -66,12 +77,15 @@ export default function FormsPage() {
     id: string;
     type: string;
   } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [submissionToDelete, setSubmissionToDelete] = useState<{
+    id: string;
+    type: string;
+    name: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchSubmissions();
-  }, [activeTab]);
-
-  async function fetchSubmissions() {
+  const fetchSubmissions = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/forms?type=${activeTab}`);
@@ -84,7 +98,20 @@ export default function FormsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [activeTab]);
+
+  useEffect(() => {
+    // Fetch immediately
+    fetchSubmissions();
+
+    // Poll for new submissions every 30 seconds
+    const interval = setInterval(() => {
+      fetchSubmissions();
+    }, 30000); // 30 seconds
+
+    // Cleanup interval on unmount or tab change
+    return () => clearInterval(interval);
+  }, [fetchSubmissions]);
 
   const filteredData = submissions.filter((item) => {
     const matchesSearch =
@@ -93,6 +120,36 @@ export default function FormsPage() {
       (item.phone && item.phone.includes(searchQuery));
     return matchesSearch;
   });
+
+  // Handle delete submission
+  async function handleDeleteSubmission() {
+    if (!submissionToDelete) return;
+
+    try {
+      setDeleting(true);
+      const response = await fetch(
+        `/api/forms/${submissionToDelete.id}?type=${submissionToDelete.type}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete submission");
+      }
+
+      // Refresh the submissions list
+      await fetchSubmissions();
+      setDeleteDialogOpen(false);
+      setSubmissionToDelete(null);
+    } catch (error) {
+      console.error("Error deleting submission:", error);
+      alert("Failed to delete submission. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   // Export to CSV
   function exportToCSV() {
@@ -260,6 +317,20 @@ export default function FormsPage() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSubmissionToDelete({
+                                    id: submission.id,
+                                    type: submission.formType,
+                                    name: submission.name,
+                                  });
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -295,6 +366,37 @@ export default function FormsPage() {
           formType={selectedSubmission.type}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Submission</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the submission from{" "}
+              <strong>{submissionToDelete?.name}</strong>? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSubmission}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
