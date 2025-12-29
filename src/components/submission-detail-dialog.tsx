@@ -142,30 +142,36 @@ export function SubmissionDetailDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-lg bg-background shadow-xl"
+        className="relative w-full max-w-3xl max-h-[calc(100dvh-2rem)] flex flex-col rounded-lg bg-background shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border p-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-foreground">
+        <div className="flex items-start justify-between border-b border-border p-4 sm:p-6 flex-shrink-0">
+          <div className="flex-1 min-w-0 pr-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
               Submission Details
             </h2>
-            <p className="text-sm text-muted-foreground capitalize">
+            <p className="text-xs sm:text-sm text-muted-foreground capitalize mt-1">
               {formType} Form
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose}
+            className="flex-shrink-0"
+          >
             <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
           </Button>
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto p-6 max-h-[calc(90vh-140px)]">
+        {/* Content - Scrollable area */}
+        <div className="overflow-y-auto flex-1 min-h-0 p-4 sm:p-6">
           {loading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
@@ -178,10 +184,10 @@ export function SubmissionDetailDialog({
           ) : submission ? (
             <div className="space-y-6">
               {/* Submission Date */}
-              <Card className="p-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>
+              <Card className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="break-words">
                     Submitted on{" "}
                     {format(
                       new Date(submission.submittedAt),
@@ -193,10 +199,10 @@ export function SubmissionDetailDialog({
 
               {/* Form Data */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">
                   Form Information
                 </h3>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   {sortFields(submission.data).map(([key, value]) => {
                     const isPhone = key.toLowerCase().includes("phone");
                     const displayValue = isPhone
@@ -228,17 +234,17 @@ export function SubmissionDetailDialog({
               {/* Files */}
               {submission.files && submission.files.length > 0 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-foreground">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground">
                     Uploaded Files ({submission.files.length})
                   </h3>
                   <div className="space-y-2">
                     {submission.files.map((file, index) => (
-                      <Card key={index} className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-primary" />
-                            <div>
-                              <p className="text-sm font-medium text-foreground">
+                      <Card key={index} className="p-3 sm:p-4">
+                        <div className="flex items-center justify-between gap-2 sm:gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                            <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs sm:text-sm font-medium text-foreground truncate">
                                 {file.originalName}
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -246,13 +252,14 @@ export function SubmissionDetailDialog({
                               </p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" asChild>
+                          <Button variant="ghost" size="sm" asChild className="flex-shrink-0">
                             <a
                               href={file.url}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
                               <Download className="h-4 w-4" />
+                              <span className="sr-only">Download {file.originalName}</span>
                             </a>
                           </Button>
                         </div>
@@ -266,27 +273,27 @@ export function SubmissionDetailDialog({
               {submission.metadata &&
                 Object.keys(submission.metadata).length > 0 && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-foreground">
+                    <h3 className="text-base sm:text-lg font-semibold text-foreground">
                       Technical Details
                     </h3>
-                    <Card className="p-4">
+                    <Card className="p-3 sm:p-4">
                       <div className="space-y-2 text-xs">
                         {submission.metadata.ip && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                            <span className="text-muted-foreground flex-shrink-0">
                               IP Address:
                             </span>
-                            <span className="font-mono text-foreground">
+                            <span className="font-mono text-foreground break-all sm:break-normal sm:text-right">
                               {submission.metadata.ip}
                             </span>
                           </div>
                         )}
                         {submission.metadata.referrer && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-2">
+                            <span className="text-muted-foreground flex-shrink-0">
                               Referrer:
                             </span>
-                            <span className="truncate font-mono text-foreground max-w-[200px]">
+                            <span className="truncate font-mono text-foreground sm:max-w-[200px] sm:text-right">
                               {submission.metadata.referrer}
                             </span>
                           </div>
@@ -313,14 +320,18 @@ export function SubmissionDetailDialog({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-border p-6">
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>
+        {/* Footer - Sticky at bottom */}
+        <div className="border-t border-border p-4 sm:p-6 flex-shrink-0 bg-background">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+              className="w-full sm:w-auto"
+            >
               Close
             </Button>
             {submission && (
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Mail className="mr-2 h-4 w-4" />
                 Contact Submitter
               </Button>
