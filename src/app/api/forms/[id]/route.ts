@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +64,42 @@ export async function GET(
     console.error("Error fetching submission details:", error);
     return NextResponse.json(
       { error: "Failed to fetch submission" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const formType = searchParams.get("type") || "consultation";
+    const collectionName = formTypeToCollection[formType];
+
+    if (!collectionName) {
+      return NextResponse.json({ error: "Invalid form type" }, { status: 400 });
+    }
+
+    const docRef = doc(db, collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return NextResponse.json(
+        { error: "Submission not found" },
+        { status: 404 }
+      );
+    }
+
+    await deleteDoc(docRef);
+
+    return NextResponse.json({ success: true, message: "Submission deleted" });
+  } catch (error) {
+    console.error("Error deleting submission:", error);
+    return NextResponse.json(
+      { error: "Failed to delete submission" },
       { status: 500 }
     );
   }
