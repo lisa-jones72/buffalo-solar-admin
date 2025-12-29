@@ -26,10 +26,24 @@ import {
   Eye,
   FileText,
   Loader2,
+  Share2,
+  Trash2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SubmissionDetailDialog } from "@/components/submission-detail-dialog";
+import { ShareLeadDialog } from "@/components/share-lead-dialog";
 import { formatPhoneNumber } from "@/lib/formatters";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type FormType =
   | "consultation"
@@ -58,6 +72,7 @@ const formTypeTabs: { value: FormType; label: string }[] = [
 ];
 
 export default function FormsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<FormType>("consultation");
   const [searchQuery, setSearchQuery] = useState("");
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
@@ -66,12 +81,21 @@ export default function FormsPage() {
     id: string;
     type: string;
   } | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [submissionToShare, setSubmissionToShare] = useState<{
+    id: string;
+    type: string;
+    name: string;
+  } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [submissionToDelete, setSubmissionToDelete] = useState<{
+    id: string;
+    type: string;
+    name: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchSubmissions();
-  }, [activeTab]);
-
-  async function fetchSubmissions() {
+  const fetchSubmissions = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/forms?type=${activeTab}`);
@@ -83,6 +107,49 @@ export default function FormsPage() {
       console.error("Error fetching submissions:", error);
     } finally {
       setLoading(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    // Fetch immediately
+    fetchSubmissions();
+
+    // Poll for new submissions every 30 seconds
+    const interval = setInterval(() => {
+      fetchSubmissions();
+    }, 30000); // 30 seconds
+
+    // Cleanup interval on unmount or tab change
+    return () => clearInterval(interval);
+  }, [fetchSubmissions]);
+
+  // Handle delete submission
+  async function handleDeleteSubmission() {
+    if (!submissionToDelete) return;
+
+    try {
+      setDeleting(true);
+      const response = await fetch(
+        `/api/forms/${submissionToDelete.id}?type=${submissionToDelete.type}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete submission");
+      }
+
+      // Refresh the submissions list
+      await fetchSubmissions();
+      setDeleteDialogOpen(false);
+      setSubmissionToDelete(null);
+    } catch (error) {
+      console.error("Error deleting submission:", error);
+      alert("Failed to delete submission. Please try again.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -260,6 +327,33 @@ export default function FormsPage() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSubmissionToShare({
+                                    id: submission.id,
+                                    type: submission.formType,
+                                    name: submission.name,
+                                  });
+                                  setShareDialogOpen(true);
+                                }}
+                              >
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => {
+                                  setSubmissionToDelete({
+                                    id: submission.id,
+                                    type: submission.formType,
+                                    name: submission.name,
+                                  });
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -295,6 +389,52 @@ export default function FormsPage() {
           formType={selectedSubmission.type}
         />
       )}
+
+      {/* Share Dialog */}
+      {submissionToShare && (
+        <ShareLeadDialog
+          isOpen={shareDialogOpen}
+          onClose={() => {
+            setShareDialogOpen(false);
+            setSubmissionToShare(null);
+          }}
+          submissionId={submissionToShare.id}
+          formType={submissionToShare.type}
+          submissionName={submissionToShare.name}
+          sharedBy={user?.displayName || user?.email || "Admin"}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Submission</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the submission from{" "}
+              <strong>{submissionToDelete?.name}</strong>? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSubmission}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
