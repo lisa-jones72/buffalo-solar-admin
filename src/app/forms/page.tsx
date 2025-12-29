@@ -161,36 +161,6 @@ export default function FormsPage() {
     return matchesSearch;
   });
 
-  // Handle delete submission
-  async function handleDeleteSubmission() {
-    if (!submissionToDelete) return;
-
-    try {
-      setDeleting(true);
-      const response = await fetch(
-        `/api/forms/${submissionToDelete.id}?type=${submissionToDelete.type}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete submission");
-      }
-
-      // Refresh the submissions list
-      await fetchSubmissions();
-      setDeleteDialogOpen(false);
-      setSubmissionToDelete(null);
-    } catch (error) {
-      console.error("Error deleting submission:", error);
-      alert("Failed to delete submission. Please try again.");
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   // Export to CSV
   function exportToCSV() {
     const headers = ["Name", "Email", "Phone", "Date", "Has Files"];
