@@ -1,7 +1,14 @@
 import nodemailer from "nodemailer";
 
-// Validate email configuration
+// Lazy transporter initialization - only create when needed at runtime
+let transporter: nodemailer.Transporter | null = null;
+
 function getTransporter() {
+  // Return existing transporter if already created
+  if (transporter) {
+    return transporter;
+  }
+
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
 
@@ -11,17 +18,16 @@ function getTransporter() {
     );
   }
 
-  return nodemailer.createTransport({
+  transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
       user,
       pass,
     },
   });
-}
 
-// Create transporter using Gmail App Password
-const transporter = getTransporter();
+  return transporter;
+}
 
 export async function sendInvitationEmail(
   to: string,
@@ -143,7 +149,8 @@ export async function sendInvitationEmail(
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    const emailTransporter = getTransporter();
+    await emailTransporter.sendMail(mailOptions);
     return { success: true };
   } catch (error) {
     console.error("Error sending invitation email:", error);
@@ -353,7 +360,8 @@ export async function sendLeadShareEmail(
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    const emailTransporter = getTransporter();
+    await emailTransporter.sendMail(mailOptions);
     return { success: true };
   } catch (error) {
     console.error("Error sending lead share email:", error);
@@ -367,7 +375,8 @@ export async function sendLeadShareEmail(
 // Test email configuration
 export async function testEmailConfig(): Promise<boolean> {
   try {
-    await transporter.verify();
+    const emailTransporter = getTransporter();
+    await emailTransporter.verify();
     return true;
   } catch (error) {
     console.error("Email configuration error:", error);
