@@ -26,11 +26,14 @@ import {
   Eye,
   FileText,
   Loader2,
+  Share2,
   Trash2,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { SubmissionDetailDialog } from "@/components/submission-detail-dialog";
+import { ShareLeadDialog } from "@/components/share-lead-dialog";
 import { formatPhoneNumber } from "@/lib/formatters";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,6 +72,7 @@ const formTypeTabs: { value: FormType; label: string }[] = [
 ];
 
 export default function FormsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<FormType>("consultation");
   const [searchQuery, setSearchQuery] = useState("");
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
@@ -76,6 +80,12 @@ export default function FormsPage() {
   const [selectedSubmission, setSelectedSubmission] = useState<{
     id: string;
     type: string;
+  } | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [submissionToShare, setSubmissionToShare] = useState<{
+    id: string;
+    type: string;
+    name: string;
   } | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [submissionToDelete, setSubmissionToDelete] = useState<{
@@ -112,6 +122,36 @@ export default function FormsPage() {
     // Cleanup interval on unmount or tab change
     return () => clearInterval(interval);
   }, [fetchSubmissions]);
+
+  // Handle delete submission
+  async function handleDeleteSubmission() {
+    if (!submissionToDelete) return;
+
+    try {
+      setDeleting(true);
+      const response = await fetch(
+        `/api/forms/${submissionToDelete.id}?type=${submissionToDelete.type}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete submission");
+      }
+
+      // Refresh the submissions list
+      await fetchSubmissions();
+      setDeleteDialogOpen(false);
+      setSubmissionToDelete(null);
+    } catch (error) {
+      console.error("Error deleting submission:", error);
+      alert("Failed to delete submission. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const filteredData = submissions.filter((item) => {
     const matchesSearch =
@@ -319,6 +359,20 @@ export default function FormsPage() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
+                                  setSubmissionToShare({
+                                    id: submission.id,
+                                    type: submission.formType,
+                                    name: submission.name,
+                                  });
+                                  setShareDialogOpen(true);
+                                }}
+                              >
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => {
                                   setSubmissionToDelete({
                                     id: submission.id,
                                     type: submission.formType,
@@ -326,7 +380,6 @@ export default function FormsPage() {
                                   });
                                   setDeleteDialogOpen(true);
                                 }}
-                                className="text-destructive focus:text-destructive"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
@@ -364,6 +417,21 @@ export default function FormsPage() {
           onClose={() => setSelectedSubmission(null)}
           submissionId={selectedSubmission.id}
           formType={selectedSubmission.type}
+        />
+      )}
+
+      {/* Share Dialog */}
+      {submissionToShare && (
+        <ShareLeadDialog
+          isOpen={shareDialogOpen}
+          onClose={() => {
+            setShareDialogOpen(false);
+            setSubmissionToShare(null);
+          }}
+          submissionId={submissionToShare.id}
+          formType={submissionToShare.type}
+          submissionName={submissionToShare.name}
+          sharedBy={user?.displayName || user?.email || "Admin"}
         />
       )}
 
