@@ -4,7 +4,12 @@ import { sendLeadShareEmail } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 // Notification email recipient
-const NOTIFICATION_EMAIL = "lisa@buffalosolar.com";
+const NOTIFICATION_EMAILS = [
+  "lisa@buffalosolar.com",
+  "alyssa@buffalosolar.com",
+  "michael@buffalosolar.com",
+  "ljones57@u.rochester.edu",
+];
 
 // Handle OPTIONS request for CORS
 export async function OPTIONS(request: Request) {
@@ -41,9 +46,9 @@ export async function POST(request: Request) {
       metadata: metadata || {},
     };
 
-    // Send notification email to lisa@buffalosolar.com
+    // Send notification email to configured recipients
     const result = await sendLeadShareEmail(
-      NOTIFICATION_EMAIL,
+      NOTIFICATION_EMAILS,
       submissionData,
       "Website Form Submission"
     );

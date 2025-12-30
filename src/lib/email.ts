@@ -162,7 +162,7 @@ export async function sendInvitationEmail(
 }
 
 export async function sendLeadShareEmail(
-  to: string,
+  to: string | string[],
   submissionData: {
     id: string;
     formType: string;
