@@ -255,10 +255,22 @@ export async function sendLeadShareEmail(
                 (file) => `
               <tr>
                 <td style="padding: 12px;">
-                  <strong>${file.originalName}</strong><br>
-                  <span style="color: #666; font-size: 12px;">
-                    ${formatFileSize(file.size)} • ${file.mimeType}
-                  </span>
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div style="flex: 1; min-width: 0;">
+                      <strong style="color: #333;">${file.originalName}</strong><br>
+                      <span style="color: #666; font-size: 12px;">
+                        ${formatFileSize(file.size)} • ${file.mimeType}
+                      </span>
+                    </div>
+                    <div style="flex-shrink: 0;">
+                      <a href="${file.url}" 
+                         style="display: inline-block; padding: 8px 16px; background-color: #FF6B35; color: white; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600;"
+                         target="_blank"
+                         rel="noopener noreferrer">
+                        View / Download
+                      </a>
+                    </div>
+                  </div>
                 </td>
               </tr>
             `
