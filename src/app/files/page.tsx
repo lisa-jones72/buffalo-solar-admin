@@ -17,6 +17,13 @@ import { Search, Download, Loader2, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { formatFileSize } from "@/lib/formatters";
 import { getFileIcon, getFileTypeLabel } from "@/lib/file-icons";
+import dynamic from "next/dynamic";
+
+// Dynamically import DocumentViewer with no SSR
+const DocumentViewer = dynamic(
+  () => import("@/components/document-viewer").then(mod => mod.DocumentViewer),
+  { ssr: false }
+);
 
 interface FileData {
   id: string;
@@ -36,6 +43,7 @@ export default function FilesPage() {
   const [files, setFiles] = useState<FileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewerFile, setViewerFile] = useState<FileData | null>(null);
 
   useEffect(() => {
     fetchFiles();
@@ -132,10 +140,13 @@ export default function FilesPage() {
                     return (
                       <TableRow key={file.id}>
                         <TableCell>
-                          <div className="flex items-center gap-3">
+                          <div 
+                            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setViewerFile(file)}
+                          >
                             <FileIcon className="h-5 w-5 text-primary" />
                             <div className="min-w-0">
-                              <p className="font-medium text-foreground truncate">
+                              <p className="font-medium text-foreground truncate hover:text-primary">
                                 {file.originalName}
                               </p>
                             </div>
@@ -189,16 +200,10 @@ export default function FilesPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              asChild
+                              onClick={() => setViewerFile(file)}
                               title="View file"
                             >
-                              <a
-                                href={file.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </a>
+                              <Eye className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -242,6 +247,17 @@ export default function FilesPage() {
           )}
         </Card>
       </div>
+
+      {/* Document Viewer */}
+      {viewerFile && (
+        <DocumentViewer
+          isOpen={true}
+          onClose={() => setViewerFile(null)}
+          fileUrl={viewerFile.url}
+          fileName={viewerFile.originalName}
+          mimeType={viewerFile.mimeType}
+        />
+      )}
     </div>
   );
 }

@@ -194,6 +194,13 @@ export async function sendLeadShareEmail(
         error: "Email service is not configured. Please check environment variables.",
       };
     }
+
+    // Determine if this is a career application
+    const isCareerApplication = submissionData.formType === "career";
+    const itemType = isCareerApplication ? "application" : "lead";
+    const itemTypeCapitalized = isCareerApplication ? "Application" : "Lead";
+    const infoSectionTitle = isCareerApplication ? "Applicant Information" : "Lead Information";
+    
     // Format submission data for display
     const formatValue = (value: unknown): string => {
       if (value === null || value === undefined) return "N/A";
@@ -265,7 +272,7 @@ export async function sendLeadShareEmail(
     const mailOptions = {
       from: `Buffalo Solar Admin <${emailUser}>`,
       to,
-      subject: `New Lead Shared: ${submissionData.formType} Form Submission`,
+      subject: `New ${itemTypeCapitalized} Shared`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -326,9 +333,9 @@ export async function sendLeadShareEmail(
           </div>
           
           <div class="content">
-            <h2>New Lead Shared with You</h2>
+            <h2>New ${itemTypeCapitalized} Shared with You</h2>
             <p>Hi there,</p>
-            <p><strong>${sharedBy}</strong> has shared a new lead with you from the Buffalo Solar Admin Center.</p>
+            <p><strong>${sharedBy}</strong> has shared a new ${itemType} with you from the Buffalo Solar Admin Center.</p>
             
             <div class="info-box">
               <p style="margin: 0;"><strong>Form Type:</strong> ${submissionData.formType}</p>
@@ -336,7 +343,7 @@ export async function sendLeadShareEmail(
               <p style="margin: 8px 0 0 0;"><strong>Submission ID:</strong> ${submissionData.id}</p>
             </div>
 
-            <h3 style="color: #333; margin-top: 32px; margin-bottom: 16px;">Lead Information</h3>
+            <h3 style="color: #333; margin-top: 32px; margin-bottom: 16px;">${infoSectionTitle}</h3>
             <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
               ${dataRows}
             </table>
@@ -344,8 +351,8 @@ export async function sendLeadShareEmail(
             ${filesSection}
 
             <p style="margin-top: 32px; padding: 16px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-              <strong>Note:</strong> This lead was shared with you from the Buffalo Solar Admin Dashboard. 
-              You can view and manage all leads by logging into the admin center.
+              <strong>Note:</strong> This ${itemType} was shared with you from the Buffalo Solar Admin Dashboard. 
+              You can view and manage all ${isCareerApplication ? "applications" : "leads"} by logging into the admin center.
             </p>
           </div>
 

@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Download, Mail, Phone, Calendar, FileText } from "lucide-react";
+import { X, Download, Mail, Phone, Calendar, FileText, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { formatPhoneNumber, formatFileSize } from "@/lib/formatters";
+import dynamic from "next/dynamic";
+
+// Dynamically import DocumentViewer with no SSR
+const DocumentViewer = dynamic(
+  () => import("@/components/document-viewer").then(mod => mod.DocumentViewer),
+  { ssr: false }
+);
 
 interface FileUpload {
   originalName: string;
@@ -44,6 +51,7 @@ export function SubmissionDetailDialog({
 }: SubmissionDetailDialogProps) {
   const [submission, setSubmission] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewerFile, setViewerFile] = useState<FileUpload | null>(null);
 
   useEffect(() => {
     if (isOpen && submissionId) {
@@ -241,10 +249,13 @@ export function SubmissionDetailDialog({
                     {submission.files.map((file, index) => (
                       <Card key={index} className="p-3 sm:p-4">
                         <div className="flex items-center justify-between gap-2 sm:gap-3">
-                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <div 
+                            className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => setViewerFile(file)}
+                          >
                             <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs sm:text-sm font-medium text-foreground truncate">
+                              <p className="text-xs sm:text-sm font-medium text-foreground truncate hover:text-primary">
                                 {file.originalName}
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -252,16 +263,34 @@ export function SubmissionDetailDialog({
                               </p>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" asChild className="flex-shrink-0">
-                            <a
-                              href={file.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setViewerFile(file)}
+                              className="flex-shrink-0"
+                              title="View file"
                             >
-                              <Download className="h-4 w-4" />
-                              <span className="sr-only">Download {file.originalName}</span>
-                            </a>
-                          </Button>
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">View {file.originalName}</span>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              asChild 
+                              className="flex-shrink-0"
+                              title="Download file"
+                            >
+                              <a
+                                href={file.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Download className="h-4 w-4" />
+                                <span className="sr-only">Download {file.originalName}</span>
+                              </a>
+                            </Button>
+                          </div>
                         </div>
                       </Card>
                     ))}
@@ -339,6 +368,17 @@ export function SubmissionDetailDialog({
           </div>
         </div>
       </div>
+
+      {/* Document Viewer */}
+      {viewerFile && (
+        <DocumentViewer
+          isOpen={true}
+          onClose={() => setViewerFile(null)}
+          fileUrl={viewerFile.url}
+          fileName={viewerFile.originalName}
+          mimeType={viewerFile.mimeType}
+        />
+      )}
     </div>
   );
 }

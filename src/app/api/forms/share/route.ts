@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
     const submissionData = {
       id: docSnap.id,
-      formType: data.formType,
+      formType: formType, // Use the formType from the request, not from the document
       submittedAt: submittedAt.toISOString(),
       data: data.data,
       files: data.files || [],
@@ -89,14 +89,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // Use appropriate terminology based on form type
+    const itemType = formType === "career" ? "Application" : "Lead";
+
     return NextResponse.json({
       success: true,
-      message: "Lead shared successfully",
+      message: `${itemType} shared successfully`,
     });
   } catch (error) {
-    console.error("Error sharing lead:", error);
+    const itemType = body?.formType === "career" ? "application" : "lead";
+    console.error(`Error sharing ${itemType}:`, error);
     return NextResponse.json(
-      { error: "Failed to share lead" },
+      { error: `Failed to share ${itemType}` },
       { status: 500 }
     );
   }

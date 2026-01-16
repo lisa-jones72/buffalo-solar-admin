@@ -36,6 +36,11 @@ export function ShareLeadDialog({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Determine if this is a career application
+  const isCareerApplication = formType === "career";
+  const itemType = isCareerApplication ? "application" : "lead";
+  const itemTypeCapitalized = isCareerApplication ? "Application" : "Lead";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -67,7 +72,7 @@ export function ShareLeadDialog({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to share lead");
+        throw new Error(data.error || `Failed to share ${itemType}`);
       }
 
       setSuccess(true);
@@ -80,7 +85,7 @@ export function ShareLeadDialog({
       }, 2000);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to share lead. Please try again."
+        err instanceof Error ? err.message : `Failed to share ${itemType}. Please try again.`
       );
     } finally {
       setLoading(false);
@@ -100,10 +105,10 @@ export function ShareLeadDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Share Lead</DialogTitle>
+          <DialogTitle>Share {itemTypeCapitalized}</DialogTitle>
           <DialogDescription>
-            Share this lead with a teammate by entering their email address. They
-            will receive a detailed email with all the lead information.
+            Share this {itemType} with a teammate by entering their email address. They
+            will receive a detailed email with all the {itemType} information.
           </DialogDescription>
         </DialogHeader>
 
@@ -128,7 +133,7 @@ export function ShareLeadDialog({
               )}
               {success && (
                 <p className="text-sm text-green-600">
-                  Lead shared successfully! The email has been sent.
+                  {itemTypeCapitalized} shared successfully! The email has been sent.
                 </p>
               )}
             </div>
@@ -165,7 +170,7 @@ export function ShareLeadDialog({
               ) : (
                 <>
                   <Mail className="mr-2 h-4 w-4" />
-                  Share Lead
+                  Share {itemTypeCapitalized}
                 </>
               )}
             </Button>
