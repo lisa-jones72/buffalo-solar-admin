@@ -25,8 +25,9 @@ const formTypeToCollection: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
+  let body: any;
   try {
-    const body = await request.json();
+    body = await request.json();
     const { submissionId, formType, recipientEmail, sharedBy } = body;
 
     // Validate required fields
