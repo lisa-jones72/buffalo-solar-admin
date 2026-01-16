@@ -25,10 +25,12 @@ const formTypeToCollection: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
-  let body: any;
+  let formType: string | undefined;
+  
   try {
-    body = await request.json();
-    const { submissionId, formType, recipientEmail, sharedBy } = body;
+    const body = await request.json();
+    const { submissionId, formType: requestFormType, recipientEmail, sharedBy } = body;
+    formType = requestFormType;
 
     // Validate required fields
     if (!submissionId || !formType || !recipientEmail || !sharedBy) {
@@ -98,7 +100,7 @@ export async function POST(request: Request) {
       message: `${itemType} shared successfully`,
     });
   } catch (error) {
-    const itemType = body?.formType === "career" ? "application" : "lead";
+    const itemType = formType === "career" ? "application" : "lead";
     console.error(`Error sharing ${itemType}:`, error);
     return NextResponse.json(
       { error: `Failed to share ${itemType}` },
