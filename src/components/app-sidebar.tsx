@@ -9,6 +9,7 @@ import {
   BarChart3,
   FolderOpen,
   FileBarChart,
+  Headphones,
   Settings,
   User,
   LogOut,
@@ -35,6 +36,7 @@ const adminLinks = [
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Files", href: "/files", icon: FolderOpen },
   { name: "Reports", href: "/reports", icon: FileBarChart },
+  { name: "Customer Service", href: "/reports/customer-service", icon: Headphones },
 ];
 
 const bottomLinks = [

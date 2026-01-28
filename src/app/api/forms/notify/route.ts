@@ -3,13 +3,45 @@ import { sendLeadShareEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
-// Notification email recipient
-const NOTIFICATION_EMAILS = [
+// Notification recipients by form type.
+// Service requests submitted from the website use formType: "support".
+const CONSULTATION_NOTIFICATION_EMAILS = [
+  "ljones57@u.rochester.edu",
   "lisa@buffalosolar.com",
   "alyssa@buffalosolar.com",
   "michael@buffalosolar.com",
-  "ljones57@u.rochester.edu",
 ];
+
+// TODO: Update these recipients to your customer service/service request inboxes.
+const SUPPORT_NOTIFICATION_EMAILS = ["lisa@buffalosolar.com"];
+
+function isSupportRequest(formType: string, formData: unknown): boolean {
+  const normalized = String(formType || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-");
+
+  if (
+    normalized === "support" ||
+    normalized === "service" ||
+    normalized === "service-request" ||
+    normalized === "customer-service"
+  ) {
+    return true;
+  }
+
+  // Fallback: many support/service forms include an issue description field.
+  if (formData && typeof formData === "object") {
+    return Object.prototype.hasOwnProperty.call(formData, "issueDescription");
+  }
+
+  return false;
+}
+
+function getNotificationEmails(formType: string, formData: unknown): string[] {
+  if (isSupportRequest(formType, formData)) return SUPPORT_NOTIFICATION_EMAILS;
+  return CONSULTATION_NOTIFICATION_EMAILS;
+}
 
 // Handle OPTIONS request for CORS
 export async function OPTIONS(request: Request) {
@@ -46,11 +78,19 @@ export async function POST(request: Request) {
       metadata: metadata || {},
     };
 
+    const recipients = getNotificationEmails(formType, formData);
+    const supportRequest = isSupportRequest(formType, formData);
+    const emailTitle =
+      supportRequest ? "Customer Service / Service Request" : "Website Form Submission";
+
+    // Debug: helps confirm which server/version is handling requests
+    console.log("Form notify recipients:", { formType, recipients, supportRequest });
+
     // Send notification email to configured recipients
     const result = await sendLeadShareEmail(
-      NOTIFICATION_EMAILS,
+      recipients,
       submissionData,
-      "Website Form Submission"
+      emailTitle
     );
 
     if (!result.success) {

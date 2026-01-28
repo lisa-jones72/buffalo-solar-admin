@@ -18,6 +18,7 @@ function toDate(
 // Map form types to their collection names
 const formTypeToCollection: Record<string, string> = {
   consultation: "consultationForms",
+  support: "supportForms",
   career: "careerForms",
   newsletter: "newsletterForms",
   contact: "contactForms",

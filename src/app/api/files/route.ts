@@ -18,6 +18,7 @@ function toDate(
 // Form type collections to check for files
 const formCollections = [
   { name: "consultationForms", type: "Consultation" },
+  { name: "supportForms", type: "Support" },
   { name: "careerForms", type: "Career" },
   { name: "contactForms", type: "Contact" },
 ];

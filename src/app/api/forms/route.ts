@@ -18,6 +18,7 @@ function toDate(
 // Map form types to their collection names
 const formTypeToCollection: Record<string, string> = {
   consultation: "consultationForms",
+  support: "supportForms",
   career: "careerForms",
   newsletter: "newsletterForms",
   contact: "contactForms",
@@ -58,6 +59,9 @@ export async function GET(request: Request) {
 
       // For career forms, get the position
       const position = formType === "career" ? data.data?.position : undefined;
+      const businessName = data.data?.businessName || undefined;
+      const issueDescription =
+        formType === "support" ? (data.data?.issueDescription as string | undefined) : undefined;
 
       return {
         id: doc.id,
@@ -65,6 +69,8 @@ export async function GET(request: Request) {
         email,
         phone,
         position,
+        businessName,
+        issueDescription,
         submittedAt: format(submittedAt, "MMM dd, yyyy HH:mm"),
         timestamp: submittedAt.getTime(), // For sorting on client
         formType,
