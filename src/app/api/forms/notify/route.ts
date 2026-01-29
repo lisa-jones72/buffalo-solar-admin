@@ -68,30 +68,42 @@ export async function POST(request: Request) {
       );
     }
 
+    const recipients = getNotificationEmails(formType, formData);
+    const supportRequest = isSupportRequest(formType, formData);
+
     // Format submission data for email
+    // Normalize formType to "support" if detected as a support request
     const submissionData = {
       id: submissionId,
-      formType: formType,
+      formType: supportRequest ? "support" : formType,
       submittedAt: new Date().toISOString(),
       data: formData,
       files: files || [],
       metadata: metadata || {},
     };
-
-    const recipients = getNotificationEmails(formType, formData);
-    const supportRequest = isSupportRequest(formType, formData);
     const emailTitle =
       supportRequest ? "Customer Service / Service Request" : "Website Form Submission";
+
+    // Build a nice subject line, especially for support requests
+    const formDataObj =
+      formData && typeof formData === "object" ? (formData as Record<string, unknown>) : {};
+    const nameForSubject =
+      (formDataObj["businessName"] as string) ||
+      (formDataObj["ownerName"] as string) ||
+      (formDataObj["email"] as string) ||
+      "Unknown";
+
+    const subjectOverride = supportRequest
+      ? `New Service Request - ${nameForSubject}`
+      : undefined;
 
     // Debug: helps confirm which server/version is handling requests
     console.log("Form notify recipients:", { formType, recipients, supportRequest });
 
     // Send notification email to configured recipients
-    const result = await sendLeadShareEmail(
-      recipients,
-      submissionData,
-      emailTitle
-    );
+    const result = await sendLeadShareEmail(recipients, submissionData, emailTitle, {
+      subjectOverride,
+    });
 
     if (!result.success) {
       console.error("Email notification failed:", result.error);

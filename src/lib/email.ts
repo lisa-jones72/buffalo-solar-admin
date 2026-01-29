@@ -180,7 +180,10 @@ export async function sendLeadShareEmail(
       referrer?: string;
     };
   },
-  sharedBy: string
+  sharedBy: string,
+  options?: {
+    subjectOverride?: string;
+  }
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Ensure we have email credentials
@@ -195,11 +198,16 @@ export async function sendLeadShareEmail(
       };
     }
 
-    // Determine if this is a career application
+    // Determine if this is a career application or support/service request
     const isCareerApplication = submissionData.formType === "career";
+    const isSupportRequest = submissionData.formType === "support";
     const itemType = isCareerApplication ? "application" : "lead";
     const itemTypeCapitalized = isCareerApplication ? "Application" : "Lead";
-    const infoSectionTitle = isCareerApplication ? "Applicant Information" : "Lead Information";
+    const infoSectionTitle = isCareerApplication
+      ? "Applicant Information"
+      : isSupportRequest
+      ? "Service Request Information"
+      : "Lead Information";
     
     // Format submission data for display
     const formatValue = (value: unknown): string => {
@@ -233,10 +241,10 @@ export async function sendLeadShareEmail(
       .map(
         ([key, value]) => `
         <tr>
-          <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #333; width: 150px;">
+          <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #333; width: 180px;">
             ${key.replace(/([A-Z])/g, " $1").trim()}
           </td>
-          <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; color: #666;">
+          <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; color: #555;">
             ${formatValue(value)}
           </td>
         </tr>
@@ -281,11 +289,28 @@ export async function sendLeadShareEmail(
       `
         : "";
 
-    const mailOptions = {
-      from: `Buffalo Solar Admin <${emailUser}>`,
-      to,
-      subject: `New ${itemTypeCapitalized} Shared`,
-      html: `
+    const subject = options?.subjectOverride || `New ${itemTypeCapitalized} Shared`;
+
+    // For support/service requests, use a simpler, service-focused layout
+    const data = submissionData.data || {};
+    const supportBusinessName = formatValue(data["businessName"]);
+    const supportOwnerName = formatValue(data["ownerName"]);
+    const supportEmail = formatValue(data["email"]);
+    const supportPhone = formatValue(data["phone"]);
+    const supportAddress = (() => {
+      const parts = [
+        data["address"],
+        data["city"],
+        data["state"],
+        data["zip"],
+      ].filter(Boolean);
+      return parts.length > 0 ? parts.join(", ") : "Not provided";
+    })();
+    const supportIssue = formatValue(data["issueDescription"]);
+    const supportYear = formatValue(data["installationYear"]);
+    const supportMount = formatValue(data["mountType"]);
+
+    const genericHtml = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -303,11 +328,6 @@ export async function sendLeadShareEmail(
               padding: 30px 0;
               border-bottom: 2px solid #f0f0f0;
               background-color: #000000;
-            }
-            .logo {
-              font-size: 24px;
-              font-weight: bold;
-              color: #FF6B35;
             }
             .logo-img {
               max-width: 200px;
@@ -376,7 +396,163 @@ export async function sendLeadShareEmail(
           </div>
         </body>
         </html>
-      `,
+      `;
+
+    const supportHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 8px 8px 0 0;
+              text-align: center;
+            }
+            .content {
+              background: #f9fafb;
+              padding: 30px;
+              border-radius: 0 0 8px 8px;
+            }
+            .field {
+              margin-bottom: 20px;
+              padding: 15px;
+              background: white;
+              border-radius: 6px;
+              border-left: 4px solid #0ea5e9;
+            }
+            .field-label {
+              font-weight: 600;
+              color: #0ea5e9;
+              margin-bottom: 5px;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .field-value {
+              color: #1f2937;
+              font-size: 16px;
+              white-space: pre-wrap;
+            }
+            .files-section {
+              margin-top: 30px;
+              padding: 20px;
+              background: #eff6ff;
+              border-radius: 6px;
+              border-left: 4px solid #3b82f6;
+            }
+            .file-item {
+              margin: 10px 0;
+              padding: 10px;
+              background: white;
+              border-radius: 4px;
+            }
+            .file-link {
+              color: #3b82f6;
+              text-decoration: none;
+              word-break: break-all;
+            }
+            .metadata {
+              margin-top: 30px;
+              padding: 15px;
+              background: #f3f4f6;
+              border-radius: 6px;
+              font-size: 12px;
+              color: #6b7280;
+            }
+            .submission-id {
+              text-align: center;
+              margin-top: 20px;
+              padding: 10px;
+              background: #e5e7eb;
+              border-radius: 4px;
+              font-size: 12px;
+              color: #6b7280;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin: 0; font-size: 24px;">New Support / Service Request</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Submission ID: ${submissionData.id}</p>
+          </div>
+          
+          <div class="content">
+            <h2 style="color: #1f2937; margin-top: 0;">Contact Information</h2>
+            
+            <div class="field">
+              <div class="field-label">Business Name</div>
+              <div class="field-value">${supportBusinessName}</div>
+            </div>
+            
+            <div class="field">
+              <div class="field-label">Owner Name</div>
+              <div class="field-value">${supportOwnerName}</div>
+            </div>
+            
+            <div class="field">
+              <div class="field-label">Email</div>
+              <div class="field-value">${supportEmail}</div>
+            </div>
+            
+            <div class="field">
+              <div class="field-label">Phone</div>
+              <div class="field-value">${supportPhone}</div>
+            </div>
+            
+            <h2 style="color: #1f2937; margin-top: 30px;">Address</h2>
+            
+            <div class="field">
+              <div class="field-label">Full Address</div>
+              <div class="field-value">${supportAddress}</div>
+            </div>
+
+            <h2 style="color: #1f2937; margin-top: 30px;">Issue</h2>
+
+            <div class="field">
+              <div class="field-label">Description</div>
+              <div class="field-value">${supportIssue}</div>
+            </div>
+
+            <h2 style="color: #1f2937; margin-top: 30px;">Installation Information</h2>
+
+            <div class="field">
+              <div class="field-label">Year Installed</div>
+              <div class="field-value">${supportYear}</div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">Mount Type</div>
+              <div class="field-value">${supportMount}</div>
+            </div>
+            
+            ${filesSection}
+            
+            <div class="submission-id">
+              Submission ID: ${submissionData.id}
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+    const html = isSupportRequest ? supportHtml : genericHtml;
+
+    const mailOptions = {
+      from: `Buffalo Solar Admin <${emailUser}>`,
+      to,
+      subject,
+      html,
     };
 
     const emailTransporter = getTransporter();
