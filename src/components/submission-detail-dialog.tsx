@@ -98,7 +98,10 @@ export function SubmissionDetailDialog({
 
   // Define preferred field order for better UX
   const fieldOrder = [
+    "ownerFirstName",
+    "ownerLastName",
     "ownerName",
+    "customerType",
     "businessName",
     "name",
     "fullName",

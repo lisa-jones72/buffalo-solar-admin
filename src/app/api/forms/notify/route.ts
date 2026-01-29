@@ -87,8 +87,15 @@ export async function POST(request: Request) {
     // Build a nice subject line, especially for support requests
     const formDataObj =
       formData && typeof formData === "object" ? (formData as Record<string, unknown>) : {};
+    
+    // Build full name from split fields if available
+    const ownerFullName = [formDataObj["ownerFirstName"], formDataObj["ownerLastName"]]
+      .filter(Boolean)
+      .join(" ");
+    
     const nameForSubject =
       (formDataObj["businessName"] as string) ||
+      ownerFullName ||
       (formDataObj["ownerName"] as string) ||
       (formDataObj["email"] as string) ||
       "Unknown";

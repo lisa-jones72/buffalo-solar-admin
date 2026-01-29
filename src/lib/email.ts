@@ -293,8 +293,10 @@ export async function sendLeadShareEmail(
 
     // For support/service requests, use a simpler, service-focused layout
     const data = submissionData.data || {};
+    const supportOwnerFirstName = formatValue(data["ownerFirstName"]);
+    const supportOwnerLastName = formatValue(data["ownerLastName"]);
+    const supportCustomerType = formatValue(data["customerType"]);
     const supportBusinessName = formatValue(data["businessName"]);
-    const supportOwnerName = formatValue(data["ownerName"]);
     const supportEmail = formatValue(data["email"]);
     const supportPhone = formatValue(data["phone"]);
     const supportAddress = (() => {
@@ -491,13 +493,23 @@ export async function sendLeadShareEmail(
             <h2 style="color: #1f2937; margin-top: 0;">Contact Information</h2>
             
             <div class="field">
-              <div class="field-label">Business Name</div>
-              <div class="field-value">${supportBusinessName}</div>
+              <div class="field-label">System Owner First Name</div>
+              <div class="field-value">${supportOwnerFirstName}</div>
             </div>
             
             <div class="field">
-              <div class="field-label">Owner Name</div>
-              <div class="field-value">${supportOwnerName}</div>
+              <div class="field-label">System Owner Last Name</div>
+              <div class="field-value">${supportOwnerLastName}</div>
+            </div>
+            
+            <div class="field">
+              <div class="field-label">Customer Type</div>
+              <div class="field-value">${supportCustomerType}</div>
+            </div>
+            
+            <div class="field">
+              <div class="field-label">Business Name</div>
+              <div class="field-value">${supportBusinessName}</div>
             </div>
             
             <div class="field">
