@@ -51,11 +51,13 @@ export interface RecentActivityItem {
 }
 
 // Admin management
+export type AdminRole = "super_admin" | "admin" | "operations";
+
 export interface Admin {
   id: string;
   email: string;
   name?: string;
-  role: "admin" | "super_admin";
+  role: AdminRole;
   status: "pending" | "active";
   invitedBy?: string;
   invitedAt: Date;

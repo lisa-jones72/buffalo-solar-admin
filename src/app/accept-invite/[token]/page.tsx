@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, UserPlus, CheckCircle, ArrowLeft } from "lucide-react";
+import { Mail, UserPlus, CheckCircle, ArrowLeft, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { validateInvitationToken } from "@/lib/admin";
+import { getRoleDisplayName } from "@/lib/permissions";
+import type { AdminRole } from "@/lib/types";
 import Image from "next/image";
 
 export default function AcceptInvitePage() {
@@ -17,6 +19,7 @@ export default function AcceptInvitePage() {
 
   const [validating, setValidating] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<string>("admin");
   const [inviteValid, setInviteValid] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [password, setPassword] = useState("");
@@ -37,6 +40,7 @@ export default function AcceptInvitePage() {
         setInviteValid(false);
       } else {
         setInviteEmail(result.email || "");
+        setInviteRole(result.role || "admin");
         setInviteValid(true);
       }
     } catch (err) {
@@ -67,8 +71,9 @@ export default function AcceptInvitePage() {
       // Create Firebase account with invitation email
       await signUp(inviteEmail, password);
 
-      // Store invitation token in session for onboarding
+      // Store invitation token and role in session for onboarding
       sessionStorage.setItem("inviteToken", token);
+      sessionStorage.setItem("inviteRole", inviteRole);
 
       // Redirect to onboarding
       router.push("/onboarding");
@@ -85,8 +90,9 @@ export default function AcceptInvitePage() {
     try {
       await signInWithGoogle();
 
-      // Store invitation token in session for onboarding
+      // Store invitation token and role in session for onboarding
       sessionStorage.setItem("inviteToken", token);
+      sessionStorage.setItem("inviteRole", inviteRole);
 
       // Redirect to onboarding
       router.push("/onboarding");
@@ -166,11 +172,19 @@ export default function AcceptInvitePage() {
               Accept Invitation
             </h2>
             <p className="text-muted-foreground text-sm">
-              You've been invited to join as an admin
+              You've been invited to join the team
             </p>
-            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/50">
-              <Mail className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">{inviteEmail}</span>
+            <div className="mt-3 flex flex-col gap-2 items-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/50">
+                <Mail className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">{inviteEmail}</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10">
+                <Shield className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-primary">
+                  {getRoleDisplayName(inviteRole as AdminRole)}
+                </span>
+              </div>
             </div>
           </div>
 

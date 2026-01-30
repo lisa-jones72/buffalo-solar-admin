@@ -1,7 +1,11 @@
+"use client";
+
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, ExternalLink, Users } from "lucide-react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 
 const GA4_URL = "https://analytics.google.com/analytics/web/";
 const LEAD_FORENSICS_URL = "https://www.leadforensics.com/";
@@ -51,6 +55,16 @@ const leadForensicsInsights = {
 };
 
 export default function AnalyticsPage() {
+  return (
+    <ProtectedRoute>
+      <RouteGuard permission="analytics.view">
+        <AnalyticsContent />
+      </RouteGuard>
+    </ProtectedRoute>
+  );
+}
+
+function AnalyticsContent() {
   const tools = [ga4Insights, leadForensicsInsights];
 
   return (

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 import {
   Dialog,
   DialogContent,
@@ -99,6 +101,16 @@ interface Announcement {
 }
 
 export default function AnnouncementsPage() {
+  return (
+    <ProtectedRoute>
+      <RouteGuard permission="announcements.view">
+        <AnnouncementsContent />
+      </RouteGuard>
+    </ProtectedRoute>
+  );
+}
+
+function AnnouncementsContent() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

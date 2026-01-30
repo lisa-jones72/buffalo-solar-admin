@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 import {
   Table,
   TableBody,
@@ -72,6 +74,16 @@ const formTypeTabs: { value: FormType; label: string }[] = [
 ];
 
 export default function FormsPage() {
+  return (
+    <ProtectedRoute>
+      <RouteGuard permission="forms.view">
+        <FormsContent />
+      </RouteGuard>
+    </ProtectedRoute>
+  );
+}
+
+function FormsContent() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<FormType>("consultation");
   const [searchQuery, setSearchQuery] = useState("");

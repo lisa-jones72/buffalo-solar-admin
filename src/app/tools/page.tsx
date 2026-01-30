@@ -1,3 +1,5 @@
+"use client";
+
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 
 const linkedApps = [
   {
@@ -63,6 +67,16 @@ const adminTools = [
 ];
 
 export default function ToolsPage() {
+  return (
+    <ProtectedRoute>
+      <RouteGuard permission="tools.view">
+        <ToolsContent />
+      </RouteGuard>
+    </ProtectedRoute>
+  );
+}
+
+function ToolsContent() {
   return (
     <div className="flex flex-col">
       <PageHeader

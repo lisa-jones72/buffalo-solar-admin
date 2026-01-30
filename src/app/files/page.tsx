@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 import {
   Table,
   TableBody,
@@ -40,6 +42,16 @@ interface FileData {
 }
 
 export default function FilesPage() {
+  return (
+    <ProtectedRoute>
+      <RouteGuard permission="files.view">
+        <FilesContent />
+      </RouteGuard>
+    </ProtectedRoute>
+  );
+}
+
+function FilesContent() {
   const [files, setFiles] = useState<FileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

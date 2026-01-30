@@ -1,7 +1,11 @@
+"use client";
+
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { Users, Bell, Lock, Palette, ChevronRight } from "lucide-react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 
 const settingsSections = [
   {
@@ -35,6 +39,16 @@ const settingsSections = [
 ];
 
 export default function SettingsPage() {
+  return (
+    <ProtectedRoute>
+      <RouteGuard permission="settings.view">
+        <SettingsContent />
+      </RouteGuard>
+    </ProtectedRoute>
+  );
+}
+
+function SettingsContent() {
   return (
     <div className="space-y-6 p-6">
       <PageHeader

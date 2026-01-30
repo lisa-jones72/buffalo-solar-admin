@@ -11,7 +11,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Admin, Invitation } from "./types";
+import type { Admin, Invitation, AdminRole } from "./types";
 
 // Check if email is an active admin
 export async function isAdminEmail(email: string): Promise<boolean> {
@@ -79,7 +79,8 @@ export async function getAllAdmins(): Promise<Admin[]> {
 // Create invitation
 export async function createInvitation(
   email: string,
-  invitedBy: string
+  invitedBy: string,
+  role: AdminRole = "admin"
 ): Promise<{ success: boolean; invitationId?: string; error?: string }> {
   try {
     // Check if already an admin
@@ -108,6 +109,7 @@ export async function createInvitation(
       email: email.toLowerCase(),
       token,
       invitedBy,
+      role, // Store role in invitation
       expiresAt,
       used: false,
       createdAt: serverTimestamp(),
@@ -119,7 +121,7 @@ export async function createInvitation(
 
     await setDoc(adminDoc, {
       email: email.toLowerCase(),
-      role: "admin",
+      role, // Use provided role
       status: "pending",
       invitedBy,
       invitedAt: serverTimestamp(),
@@ -197,7 +199,7 @@ export async function acceptInvitation(
 // Validate invitation token
 export async function validateInvitationToken(
   token: string
-): Promise<{ valid: boolean; email?: string; error?: string }> {
+): Promise<{ valid: boolean; email?: string; role?: AdminRole; error?: string }> {
   try {
     const invitationsRef = collection(db, "invitations");
     const q = query(invitationsRef, where("token", "==", token));
@@ -207,7 +209,7 @@ export async function validateInvitationToken(
       return { valid: false, error: "Invalid invitation" };
     }
 
-    const invitation = snapshot.docs[0].data() as Invitation;
+    const invitation = snapshot.docs[0].data();
 
     if (invitation.used) {
       return { valid: false, error: "Invitation already used" };
@@ -218,7 +220,10 @@ export async function validateInvitationToken(
       return { valid: false, error: "Invitation expired" };
     }
 
-    return { valid: true, email: invitation.email };
+    // Return the role from the invitation (defaults to "admin" for backwards compatibility)
+    const role = (invitation.role as AdminRole) || "admin";
+
+    return { valid: true, email: invitation.email, role };
   } catch (error) {
     console.error("Error validating token:", error);
     return { valid: false, error: "Failed to validate invitation" };

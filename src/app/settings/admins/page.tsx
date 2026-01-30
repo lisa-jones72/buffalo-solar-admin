@@ -6,33 +6,65 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAllAdmins } from "@/lib/admin";
-import type { Admin } from "@/lib/types";
-import { UserPlus, Mail, CheckCircle, Clock, Copy, Trash2 } from "lucide-react";
+import type { Admin, AdminRole } from "@/lib/types";
+import { UserPlus, Mail, CheckCircle, Clock, Copy, Trash2, Loader2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { ALLOWED_ADMIN_EMAILS } from "@/lib/auth-whitelist";
+import { RouteGuard } from "@/components/RouteGuard";
+import { usePermissions } from "@/hooks/usePermissions";
+import { getRoleDisplayName } from "@/lib/permissions";
 
 export default function AdminsPage() {
   return (
     <ProtectedRoute>
-      <AdminsContent />
+      <RouteGuard permission="settings.admins.view">
+        <AdminsContent />
+      </RouteGuard>
     </ProtectedRoute>
   );
 }
 
 function AdminsContent() {
   const { user } = useAuth();
+  const { hasPermission, getInvitableRoles, role: currentUserRole } = usePermissions();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<AdminRole>("admin");
   const [inviting, setInviting] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   
-  // Check if current user is a super admin
-  const isSuperAdmin = user?.email && ALLOWED_ADMIN_EMAILS.includes(user.email.toLowerCase());
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState<{ email: string; name?: string; status: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  
+  // Get available roles for invitation
+  const availableRoles = getInvitableRoles() as AdminRole[];
+  
+  // Check permissions
+  const canInvite = hasPermission("settings.admins.invite");
+  const canDelete = hasPermission("settings.admins.delete");
 
   useEffect(() => {
     loadAdmins();
@@ -63,6 +95,7 @@ function AdminsContent() {
         body: JSON.stringify({
           email: inviteEmail,
           invitedBy: user?.email || "",
+          role: inviteRole,
         }),
       });
 
@@ -73,9 +106,10 @@ function AdminsContent() {
         return;
       }
 
-      setSuccess(`Invitation sent to ${inviteEmail}!`);
+      setSuccess(`Invitation sent to ${inviteEmail} as ${getRoleDisplayName(inviteRole)}!`);
       setInviteLink(data.inviteLink);
       setInviteEmail("");
+      setInviteRole("admin"); // Reset to default
       loadAdmins(); // Refresh admin list
     } catch (err) {
       setError("Failed to send invitation");
@@ -89,36 +123,49 @@ function AdminsContent() {
     setSuccess("Invite link copied to clipboard!");
   };
 
-  const handleDelete = async (email: string, status: string) => {
-    const confirmMessage = status === "pending" 
-      ? `Delete invitation for ${email}?`
-      : `Delete admin user ${email}? This action cannot be undone.`;
-      
-    if (!confirm(confirmMessage)) {
-      return;
-    }
+  // Open delete confirmation dialog
+  const openDeleteDialog = (admin: Admin) => {
+    setAdminToDelete({
+      email: admin.email,
+      name: admin.name,
+      status: admin.status,
+    });
+    setDeleteDialogOpen(true);
+  };
+
+  // Perform the actual delete
+  const handleConfirmDelete = async () => {
+    if (!adminToDelete) return;
+
+    setDeleting(true);
+    setError("");
 
     try {
       const response = await fetch("/api/admins/delete", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: adminToDelete.email }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         setError(data.error || "Failed to delete admin");
+        setDeleting(false);
         return;
       }
 
-      const successMessage = status === "pending"
-        ? `Invitation for ${email} deleted`
-        : `Admin ${email} deleted successfully`;
+      const successMessage = adminToDelete.status === "pending"
+        ? `Invitation for ${adminToDelete.email} deleted`
+        : `Admin ${adminToDelete.name || adminToDelete.email} deleted successfully`;
       setSuccess(successMessage);
+      setDeleteDialogOpen(false);
+      setAdminToDelete(null);
       loadAdmins(); // Refresh list
     } catch (err) {
       setError("Failed to delete admin");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -145,8 +192,25 @@ function AdminsContent() {
               onChange={(e) => setInviteEmail(e.target.value)}
               required
               className="flex-1"
+              disabled={!canInvite}
             />
-            <Button type="submit" disabled={inviting}>
+            <Select
+              value={inviteRole}
+              onValueChange={(value) => setInviteRole(value as AdminRole)}
+              disabled={!canInvite}
+            >
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableRoles.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {getRoleDisplayName(role)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button type="submit" disabled={inviting || !canInvite}>
               {inviting ? "Sending..." : "Send Invite"}
             </Button>
           </div>
@@ -227,6 +291,11 @@ function AdminsContent() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {/* Role badge */}
+                  <Badge variant="outline" className="capitalize">
+                    {getRoleDisplayName(admin.role)}
+                  </Badge>
+
                   {admin.status === "active" ? (
                     <>
                       <Badge
@@ -236,12 +305,12 @@ function AdminsContent() {
                         <CheckCircle className="w-3 h-3 mr-1" />
                         Active
                       </Badge>
-                      {/* Super admins can delete other active admins (but not themselves) */}
-                      {isSuperAdmin && admin.email !== user?.email && (
+                      {/* Only users with delete permission can delete active admins (but not themselves) */}
+                      {canDelete && admin.email !== user?.email && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(admin.email, admin.status)}
+                          onClick={() => openDeleteDialog(admin)}
                           className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
                           title="Delete admin"
                         >
@@ -258,20 +327,19 @@ function AdminsContent() {
                         <Clock className="w-3 h-3 mr-1" />
                         Pending
                       </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(admin.email, admin.status)}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
-                        title="Delete invitation"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {/* Anyone with invite permission can delete pending invitations */}
+                      {canInvite && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openDeleteDialog(admin)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                          title="Delete invitation"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </>
-                  )}
-
-                  {admin.role === "super_admin" && (
-                    <Badge variant="outline">Super Admin</Badge>
                   )}
                 </div>
               </div>
@@ -279,6 +347,54 @@ function AdminsContent() {
           </div>
         )}
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {adminToDelete?.status === "pending"
+                ? "Delete Invitation"
+                : "Delete Admin User"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {adminToDelete?.status === "pending" ? (
+                <>
+                  Are you sure you want to delete the invitation for{" "}
+                  <strong>{adminToDelete?.email}</strong>? They will no longer
+                  be able to accept this invitation.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to delete{" "}
+                  <strong>
+                    {adminToDelete?.name || adminToDelete?.email}
+                  </strong>
+                  ? This action cannot be undone and they will lose access to
+                  the admin center.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

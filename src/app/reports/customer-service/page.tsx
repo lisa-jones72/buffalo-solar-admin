@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 import {
   Table,
   TableBody,
@@ -66,6 +68,16 @@ function truncate(text: string, max = 80) {
 }
 
 export default function CustomerServiceReportPage() {
+  return (
+    <ProtectedRoute>
+      <RouteGuard permission="reports.customer-service.view">
+        <CustomerServiceContent />
+      </RouteGuard>
+    </ProtectedRoute>
+  );
+}
+
+function CustomerServiceContent() {
   const { user } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");

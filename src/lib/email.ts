@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import type { AdminRole } from "./types";
 
 // Lazy transporter initialization - only create when needed at runtime
 let transporter: nodemailer.Transporter | null = null;
@@ -29,16 +30,77 @@ function getTransporter() {
   return transporter;
 }
 
+// Get role-specific email content
+function getRoleEmailContent(role: AdminRole): {
+  roleTitle: string;
+  roleDescription: string;
+  capabilities: string[];
+  accentColor: string;
+} {
+  switch (role) {
+    case "super_admin":
+      return {
+        roleTitle: "Super Admin",
+        roleDescription: "full administrative access",
+        capabilities: [
+          "Manage form submissions and leads",
+          "View analytics and reports",
+          "Manage content and files",
+          "Invite and manage team members",
+          "Full system access and settings",
+        ],
+        accentColor: "#7C3AED", // Purple for super admin
+      };
+    case "admin":
+      return {
+        roleTitle: "Admin",
+        roleDescription: "administrative access",
+        capabilities: [
+          "Manage form submissions and leads",
+          "View analytics and reports",
+          "Manage content and files",
+          "Invite new team members",
+        ],
+        accentColor: "#FF6B35", // Orange for admin
+      };
+    case "operations":
+      return {
+        roleTitle: "Operations",
+        roleDescription: "customer service access",
+        capabilities: [
+          "View and manage customer service requests",
+          "Access support ticket submissions",
+          "View your profile and settings",
+        ],
+        accentColor: "#0EA5E9", // Blue for operations
+      };
+    default:
+      return {
+        roleTitle: "Team Member",
+        roleDescription: "access",
+        capabilities: ["Access the admin portal"],
+        accentColor: "#FF6B35",
+      };
+  }
+}
+
 export async function sendInvitationEmail(
   to: string,
   inviteLink: string,
-  invitedBy: string
+  invitedBy: string,
+  role: AdminRole = "admin"
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const roleContent = getRoleEmailContent(role);
+    
+    const capabilitiesList = roleContent.capabilities
+      .map((item) => `<li style="margin-bottom: 8px;">${item}</li>`)
+      .join("");
+
     const mailOptions = {
       from: `Buffalo Solar Admin <${process.env.GMAIL_USER}>`,
       to,
-      subject: "You've been invited to Buffalo Solar Admin Center",
+      subject: `You've been invited to Buffalo Solar as ${roleContent.roleTitle}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -75,7 +137,7 @@ export async function sendInvitationEmail(
             .button {
               display: inline-block;
               padding: 14px 32px;
-              background-color: #FF6B35;
+              background-color: ${roleContent.accentColor};
               color: white !important;
               text-decoration: none;
               border-radius: 8px;
@@ -84,10 +146,20 @@ export async function sendInvitationEmail(
             }
             .info-box {
               background-color: #f8f9fa;
-              border-left: 4px solid #FF6B35;
+              border-left: 4px solid ${roleContent.accentColor};
               padding: 16px;
               margin: 20px 0;
               border-radius: 4px;
+            }
+            .role-badge {
+              display: inline-block;
+              padding: 6px 12px;
+              background-color: ${roleContent.accentColor}15;
+              color: ${roleContent.accentColor};
+              border-radius: 16px;
+              font-weight: 600;
+              font-size: 14px;
+              border: 1px solid ${roleContent.accentColor}30;
             }
             .footer {
               text-align: center;
@@ -107,19 +179,18 @@ export async function sendInvitationEmail(
           <div class="content">
             <h2>You've Been Invited!</h2>
             <p>Hi there,</p>
-            <p><strong>${invitedBy}</strong> has invited you to join the Buffalo Solar Admin Center.</p>
+            <p><strong>${invitedBy}</strong> has invited you to join the Buffalo Solar Admin Center with <strong>${roleContent.roleDescription}</strong>.</p>
             
             <div class="info-box">
-              <p style="margin: 0;"><strong>Your invitation email:</strong></p>
-              <p style="margin: 8px 0 0 0; color: #FF6B35; font-weight: 600;">${to}</p>
+              <p style="margin: 0 0 8px 0;"><strong>Your invitation email:</strong></p>
+              <p style="margin: 0 0 12px 0; color: ${roleContent.accentColor}; font-weight: 600;">${to}</p>
+              <p style="margin: 0;"><strong>Your role:</strong></p>
+              <p style="margin: 8px 0 0 0;"><span class="role-badge">${roleContent.roleTitle}</span></p>
             </div>
 
-            <p>As an admin, you'll be able to:</p>
-            <ul>
-              <li>Manage form submissions and leads</li>
-              <li>View analytics and reports</li>
-              <li>Manage content and files</li>
-              <li>Invite other team members</li>
+            <p>With your ${roleContent.roleTitle} access, you'll be able to:</p>
+            <ul style="padding-left: 20px;">
+              ${capabilitiesList}
             </ul>
 
             <p style="margin-top: 32px;">Click the button below to accept your invitation and create your account:</p>
@@ -130,7 +201,7 @@ export async function sendInvitationEmail(
 
             <p style="font-size: 14px; color: #666; margin-top: 32px;">
               Or copy and paste this link into your browser:<br>
-              <a href="${inviteLink}" style="color: #FF6B35; word-break: break-all;">${inviteLink}</a>
+              <a href="${inviteLink}" style="color: ${roleContent.accentColor}; word-break: break-all;">${inviteLink}</a>
             </p>
 
             <p style="font-size: 14px; color: #999; margin-top: 24px;">

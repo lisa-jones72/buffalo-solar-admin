@@ -17,11 +17,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { DashboardMetrics, RecentActivityItem } from "@/lib/types";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 
 export default function DashboardPage() {
   return (
     <ProtectedRoute>
-      <DashboardContent />
+      <RouteGuard permission="dashboard.view">
+        <DashboardContent />
+      </RouteGuard>
     </ProtectedRoute>
   );
 }

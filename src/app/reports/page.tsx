@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RouteGuard } from "@/components/RouteGuard";
 import {
   Table,
   TableBody,
@@ -68,6 +70,16 @@ function truncate(text: string, max = 80) {
 }
 
 export default function ReportsPage() {
+  return (
+    <ProtectedRoute>
+      <RouteGuard permission="reports.view">
+        <ReportsContent />
+      </RouteGuard>
+    </ProtectedRoute>
+  );
+}
+
+function ReportsContent() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ReportsTab>("overview");
 

@@ -6,25 +6,139 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { acceptInvitation } from "@/lib/admin";
+import { usePermissions } from "@/hooks/usePermissions";
+import { getRoleDisplayName } from "@/lib/permissions";
+import type { AdminRole } from "@/lib/types";
 import Image from "next/image";
-import { CheckCircle, User, Briefcase, Sparkles } from "lucide-react";
+import { CheckCircle, User, Briefcase, Sparkles, Headphones, Shield, BarChart3 } from "lucide-react";
+
+// Role-specific onboarding content - scalable for new roles
+interface OnboardingContent {
+  welcomeTitle: string;
+  welcomeSubtitle: string;
+  features: Array<{
+    title: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }>;
+  successRedirectLabel: string;
+}
+
+function getOnboardingContent(role: AdminRole): OnboardingContent {
+  switch (role) {
+    case "super_admin":
+      return {
+        welcomeTitle: "Welcome, Super Admin!",
+        welcomeSubtitle: "You have full access to manage Buffalo Solar's admin center.",
+        features: [
+          {
+            title: "Full system access",
+            description: "Manage all features, settings, and configurations",
+            icon: Shield,
+          },
+          {
+            title: "Team management",
+            description: "Invite and manage all admin users and their roles",
+            icon: User,
+          },
+          {
+            title: "Analytics & reports",
+            description: "Access comprehensive analytics and business reports",
+            icon: BarChart3,
+          },
+        ],
+        successRedirectLabel: "Redirecting to dashboard...",
+      };
+    case "admin":
+      return {
+        welcomeTitle: "Welcome to Buffalo Solar!",
+        welcomeSubtitle: "Let's get your account set up. This will only take a minute.",
+        features: [
+          {
+            title: "Manage leads & forms",
+            description: "Access all form submissions and lead data",
+            icon: Briefcase,
+          },
+          {
+            title: "View analytics",
+            description: "Track website traffic and performance metrics",
+            icon: BarChart3,
+          },
+          {
+            title: "Collaborate with team",
+            description: "Invite and manage other team members",
+            icon: User,
+          },
+        ],
+        successRedirectLabel: "Redirecting to dashboard...",
+      };
+    case "operations":
+      return {
+        welcomeTitle: "Welcome to the Team!",
+        welcomeSubtitle: "You're joining Buffalo Solar's customer service operations.",
+        features: [
+          {
+            title: "Customer service requests",
+            description: "View and manage support tickets from customers",
+            icon: Headphones,
+          },
+          {
+            title: "Service submissions",
+            description: "Access customer service form submissions",
+            icon: Briefcase,
+          },
+          {
+            title: "Your profile",
+            description: "Manage your account settings and preferences",
+            icon: User,
+          },
+        ],
+        successRedirectLabel: "Redirecting to customer service...",
+      };
+    default:
+      return {
+        welcomeTitle: "Welcome to Buffalo Solar!",
+        welcomeSubtitle: "Let's get your account set up.",
+        features: [
+          {
+            title: "Access the portal",
+            description: "You're all set to get started",
+            icon: CheckCircle,
+          },
+        ],
+        successRedirectLabel: "Redirecting...",
+      };
+  }
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { getDefaultLandingPage, loading: permissionsLoading } = usePermissions();
 
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
-  const [role, setRole] = useState("");
+  const [roleTitle, setRoleTitle] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [inviteRole, setInviteRole] = useState<AdminRole>("admin");
 
   useEffect(() => {
     // If no user, redirect to login
     if (!user) {
       router.push("/login");
+      return;
+    }
+
+    // Get the role from sessionStorage (set during accept-invite)
+    const storedRole = sessionStorage.getItem("inviteRole") as AdminRole;
+    if (storedRole) {
+      setInviteRole(storedRole);
     }
   }, [user, router]);
+
+  // Get role-specific onboarding content
+  const onboardingContent = getOnboardingContent(inviteRole);
 
   const handleComplete = async () => {
     if (!name.trim()) {
@@ -49,16 +163,18 @@ export default function OnboardingPage() {
           return;
         }
 
-        // Clear invitation token
+        // Clear invitation token and role
         sessionStorage.removeItem("inviteToken");
+        sessionStorage.removeItem("inviteRole");
       }
 
       // Show success step
       setStep(3);
 
-      // Redirect to dashboard after 2 seconds
+      // Redirect to appropriate landing page after 2 seconds
       setTimeout(() => {
-        router.push("/");
+        const landingPage = getDefaultLandingPage();
+        router.push(landingPage);
       }, 2000);
     } catch (err) {
       setError("Failed to complete onboarding");
@@ -104,41 +220,31 @@ export default function OnboardingPage() {
                     <Sparkles className="w-8 h-8 text-primary" />
                   </div>
                   <h2 className="text-2xl font-bold text-foreground mb-2">
-                    Welcome to Buffalo Solar!
+                    {onboardingContent.welcomeTitle}
                   </h2>
                   <p className="text-muted-foreground">
-                    Let's get your account set up. This will only take a minute.
+                    {onboardingContent.welcomeSubtitle}
                   </p>
+                  <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10">
+                    <Shield className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">
+                      {getRoleDisplayName(inviteRole)}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-4 mb-8">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Manage leads & forms</p>
-                      <p className="text-sm text-muted-foreground">
-                        Access all form submissions and lead data
-                      </p>
+                  {onboardingContent.features.map((feature, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <feature.icon className="w-5 h-5 text-green-500 mt-0.5" />
+                      <div>
+                        <p className="font-medium">{feature.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {feature.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">View analytics</p>
-                      <p className="text-sm text-muted-foreground">
-                        Track website traffic and performance metrics
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Collaborate with team</p>
-                      <p className="text-sm text-muted-foreground">
-                        Invite and manage other admin users
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 <Button
@@ -188,13 +294,13 @@ export default function OnboardingPage() {
 
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Your role (optional)
+                      Your job title (optional)
                     </label>
                     <Input
                       type="text"
                       placeholder="e.g., Sales Manager, Marketing Lead"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
+                      value={roleTitle}
+                      onChange={(e) => setRoleTitle(e.target.value)}
                       className="h-12"
                     />
                   </div>
@@ -234,7 +340,7 @@ export default function OnboardingPage() {
                 </p>
                 <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                  <span>Redirecting to dashboard...</span>
+                  <span>{onboardingContent.successRedirectLabel}</span>
                 </div>
               </div>
             )}

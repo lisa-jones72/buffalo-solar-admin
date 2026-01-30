@@ -6,8 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getEffectiveRole, DEFAULT_LANDING_PAGE } from "@/lib/permissions";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { AdminRole } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
+
+// Helper to get landing page for a user email
+async function getLandingPageForUser(email: string): Promise<string> {
+  try {
+    // Fetch the admin record to get their role
+    const adminsRef = collection(db, "admins");
+    const q = query(adminsRef, where("email", "==", email.toLowerCase()));
+    const snapshot = await getDocs(q);
+
+    let databaseRole: AdminRole | undefined;
+    if (!snapshot.empty) {
+      const adminData = snapshot.docs[0].data();
+      databaseRole = adminData.role as AdminRole;
+    }
+
+    // Get effective role (considers whitelist for super_admin)
+    const role = getEffectiveRole(email, databaseRole);
+    return DEFAULT_LANDING_PAGE[role];
+  } catch (error) {
+    console.error("Error getting landing page:", error);
+    return "/"; // Fallback to dashboard
+  }
+}
 
 export default function LoginPage() {
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -25,10 +52,11 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push("/");
+      // Redirect to role-appropriate landing page
+      const landingPage = await getLandingPageForUser(email);
+      router.push(landingPage);
     } catch (err: any) {
       setError(err.message || "Failed to sign in");
-    } finally {
       setLoading(false);
     }
   };
@@ -38,11 +66,17 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signInWithGoogle();
-      router.push("/");
+      const result = await signInWithGoogle();
+      // Get email from the signed-in user
+      const userEmail = result?.user?.email;
+      if (userEmail) {
+        const landingPage = await getLandingPageForUser(userEmail);
+        router.push(landingPage);
+      } else {
+        router.push("/");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to sign in with Google");
-    } finally {
       setLoading(false);
     }
   };
